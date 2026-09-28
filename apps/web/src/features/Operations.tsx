@@ -1,8 +1,13 @@
 import { usePosting } from "../usePosting";
+import { Receipt } from "./Counter";
 import { ImportDialog } from "./Catalog";
 import { useState } from "react";
 import { api } from "../api";
 import {
+  Pager,
+  HistoryFilters,
+  emptyFilters,
+  historyParams,
   Field,
   Modal,
   Notice,
@@ -15,8 +20,15 @@ export function Stock({ role }: { role: string }) {
   const [v, setV] = useState(0),
     [open, setOpen] = useState(false),
     [imp, setImp] = useState(false),
-    [page, setPage] = useState(1);
-  const { data, error } = useData("/movements?page=" + page, v);
+    [page, setPage] = useState(1),
+    [filters, setFilters] = useState(emptyFilters);
+  const { data, error } = useData(
+    "/movements?" +
+      historyParams({ ...filters, status: "" }, page) +
+      "&kind=" +
+      filters.status,
+    v,
+  );
   return (
     <>
       <div className="toolbar">
@@ -32,6 +44,14 @@ export function Stock({ role }: { role: string }) {
           </div>
         )}
       </div>
+      <HistoryFilters
+        value={filters}
+        statuses={["opening", "adjustment", "receipt", "sale", "return"]}
+        onChange={(f) => {
+          setFilters(f);
+          setPage(1);
+        }}
+      />
       <Notice>{error}</Notice>
       <section className="panel">
         <div className="table-scroll">
@@ -75,18 +95,7 @@ export function Stock({ role }: { role: string }) {
         {data?.length === 0 && (
           <div className="empty">No stock movements recorded.</div>
         )}
-        <footer className="pagination">
-          <button disabled={page === 1} onClick={() => setPage(page - 1)}>
-            ← Previous
-          </button>
-          <span>Page {page}</span>
-          <button
-            disabled={!data || data.length < 100}
-            onClick={() => setPage(page + 1)}
-          >
-            Next →
-          </button>
-        </footer>
+        <Pager page={page} onPage={setPage} count={data?.length} />
       </section>
       {imp && (
         <ImportDialog
@@ -119,7 +128,11 @@ function StockForm({ close, saved }: { close: () => void; saved: () => void }) {
   return (
     <Modal title="Record stock change" onClose={close} canClose={!busy}>
       <fieldset disabled={busy || posting.pending}>
-        <PartPicker onPick={setPart} />
+        <PartPicker
+          onPick={setPart}
+          disabled={busy || posting.pending}
+          includeInactive
+        />
       </fieldset>
       {part && (
         <p>
@@ -342,10 +355,17 @@ export function Settings() {
 }
 export function Reports({ role }: { role: string }) {
   const [from, setFrom] = useState(""),
-    [to, setTo] = useState("");
+    [to, setTo] = useState(""),
+    [page, setPage] = useState(1),
+    [receipt, setReceipt] = useState<any>(null),
+    [message, setMessage] = useState("");
   const { data: d, error } = useData(
     "/reports?" +
-      new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) }),
+      new URLSearchParams({
+        ...(from ? { from } : {}),
+        ...(to ? { to } : {}),
+        page: String(page),
+      }),
   );
   return (
     <>
@@ -354,14 +374,20 @@ export function Reports({ role }: { role: string }) {
           <input
             type="date"
             value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={(e) => {
+              setFrom(e.target.value);
+              setPage(1);
+            }}
           />
         </Field>
         <Field label="Through date">
           <input
             type="date"
             value={to}
-            onChange={(e) => setTo(e.target.value)}
+            onChange={(e) => {
+              setTo(e.target.value);
+              setPage(1);
+            }}
           />
         </Field>
         {role === "manager" && (
@@ -370,7 +396,15 @@ export function Reports({ role }: { role: string }) {
           </a>
         )}
       </div>
-      <Notice>{error}</Notice>
+      <Notice>{error || message}</Notice>
+      {receipt && (
+        <Receipt
+          sale={receipt}
+          role={role}
+          close={() => setReceipt(null)}
+          returned={() => setReceipt(null)}
+        />
+      )}
       {d && (
         <>
           <p className="muted">
@@ -394,7 +428,7 @@ export function Reports({ role }: { role: string }) {
           <section className="panel">
             <div className="panel-title">
               <h2>Supporting sales</h2>
-              <span className="muted">Most recent 25 in date range</span>
+              <span className="muted">{d.salesCount} sales in date range</span>
             </div>
             <table>
               <thead>
@@ -407,7 +441,24 @@ export function Reports({ role }: { role: string }) {
               <tbody>
                 {d.recent.map((s: any) => (
                   <tr key={s.id}>
-                    <td className="mono">{short(s.id)}</td>
+                    <td className="mono">
+                      {role === "manager" ? (
+                        <button
+                          className="row-link"
+                          onClick={async () => {
+                            try {
+                              setReceipt(await api("/sales/" + s.id));
+                            } catch (e: any) {
+                              setMessage(e.message);
+                            }
+                          }}
+                        >
+                          {short(s.id)}
+                        </button>
+                      ) : (
+                        short(s.id)
+                      )}
+                    </td>
                     <td>{new Date(s.posted_at).toLocaleString()}</td>
                     <td>
                       {d.currency} {s.total}
@@ -416,6 +467,7 @@ export function Reports({ role }: { role: string }) {
                 ))}
               </tbody>
             </table>
+            <Pager page={page} onPage={setPage} count={d.recent.length} />
             <p className="hint pad">
               Sales and payments are gross recorded totals. Returns and external
               refunds are tracked separately; these figures are not profit or
@@ -424,6 +476,52 @@ export function Reports({ role }: { role: string }) {
           </section>
         </>
       )}
+    </>
+  );
+}
+
+export function Audit() {
+  const [filters, setFilters] = useState(emptyFilters),
+    [page, setPage] = useState(1);
+  const { data, error } = useData("/audit?" + historyParams(filters, page));
+  return (
+    <>
+      <HistoryFilters
+        value={filters}
+        onChange={(f) => {
+          setFilters(f);
+          setPage(1);
+        }}
+      />
+      <Notice>{error}</Notice>
+      <section className="panel">
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Staff member</th>
+                <th>Action / reason</th>
+                <th>Record reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data?.map((a: any) => (
+                <tr key={a.id}>
+                  <td>{new Date(a.created_at).toLocaleString()}</td>
+                  <td>{a.username}</td>
+                  <td>{a.action}</td>
+                  <td className="mono">{a.record_id}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {data?.length === 0 && (
+          <div className="empty">No activity matches these filters.</div>
+        )}
+        <Pager page={page} onPage={setPage} count={data?.length} />
+      </section>
     </>
   );
 }

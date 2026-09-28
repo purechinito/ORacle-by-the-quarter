@@ -17,8 +17,9 @@ export function createPosting(
     },
     async submit(path: string, body: any) {
       if (!attempt) {
-        attempt = { path, body: JSON.parse(JSON.stringify(body)) };
-        store.set(JSON.stringify(attempt));
+        const next = { path, body: JSON.parse(JSON.stringify(body)) };
+        store.set(JSON.stringify(next));
+        attempt = next;
       }
       try {
         const result = await request(attempt.path, "POST", attempt.body);
@@ -26,7 +27,7 @@ export function createPosting(
         attempt = null;
         return result;
       } catch (error: any) {
-        if (error.status >= 400 && error.status < 500) {
+        if ([400, 404, 409, 422].includes(error.status)) {
           store.clear();
           attempt = null;
         }

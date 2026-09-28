@@ -4,6 +4,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { AppError, requireRole, transaction } from "../db";
 import type { Actor } from "../auth";
+import { historyQuery, checkDates } from "./history";
 import { audit, id, key, once, text } from "./common";
 export async function move(
   tx: PoolClient,
@@ -20,7 +21,8 @@ export async function move(
       ])
     ).rows[0];
     if (!p) throw new AppError(404, "Part not found.");
-    if (!p.active) throw new AppError(409, "Inactive parts cannot be posted.");
+    if (!p.active && !["return", "adjustment"].includes(kind))
+      throw new AppError(409, "Inactive parts cannot be sold or received.");
     if (p.stock + l.qty < 0)
       throw new AppError(409, "Insufficient stock. Your draft has been kept.");
     if (l.qty === 0) continue;
@@ -37,16 +39,27 @@ export async function move(
 }
 export async function inventoryRoutes(app: FastifyInstance, pool: Pool) {
   app.get("/api/movements", async (req) => {
-    const q = z
-      .object({
+    const q = historyQuery
+      .extend({
         partId: id.optional(),
-        page: z.coerce.number().int().min(1).default(1),
+        kind: z
+          .enum(["opening", "adjustment", "receipt", "sale", "return", ""])
+          .default(""),
       })
       .parse(req.query);
+    checkDates(q);
     return (
       await pool.query(
-        "SELECT m.*,p.sku,p.name,u.username FROM movements m JOIN parts p ON p.id=m.part_id JOIN users u ON u.id=m.actor WHERE ($1::uuid IS NULL OR m.part_id=$1) ORDER BY m.id DESC LIMIT 100 OFFSET $2",
-        [q.partId ?? null, (q.page - 1) * 100],
+        "SELECT m.*,p.sku,p.name,u.username FROM movements m JOIN parts p ON p.id=m.part_id JOIN users u ON u.id=m.actor WHERE ($1::uuid IS NULL OR m.part_id=$1) AND ($2='' OR position(lower($2) in lower(p.sku||' '||p.name||' '||m.reason||' '||m.document_id))>0) AND ($3='' OR m.kind=$3) AND ($4::date IS NULL OR m.created_at>=($4::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) AND ($5::date IS NULL OR m.created_at<(($5::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) ORDER BY m.id DESC LIMIT $6 OFFSET $7",
+        [
+          q.partId ?? null,
+          q.q,
+          q.kind,
+          q.from ?? null,
+          q.to ?? null,
+          q.limit,
+          (q.page - 1) * q.limit,
+        ],
       )
     ).rows;
   });

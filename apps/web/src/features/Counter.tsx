@@ -1,9 +1,14 @@
+import { sessionStore, useSessionState } from "../session";
 import { usePosting } from "../usePosting";
 import { addPartToCart, invalidateCartTotals } from "../cart";
 import { createCheckout } from "../checkout";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import {
+  Pager,
+  HistoryFilters,
+  emptyFilters,
+  historyParams,
   Field,
   Modal,
   Notice,
@@ -12,18 +17,36 @@ import {
   useData,
   type Part,
 } from "../components";
-export function Counter({ role }: { role: string }) {
-  const checkout = useRef(createCheckout(api));
-  const [cart, setCart] = useState<any>(null),
-    [lines, setLines] = useState<any[]>([]),
+export function Counter({
+  role,
+  onBusyChange,
+}: {
+  role: string;
+  onBusyChange: (busy: boolean) => void;
+}) {
+  const checkout = useRef(createCheckout(api, sessionStore("checkout")));
+  const [cart, setCart] = useSessionState<any>("draft", null),
+    [lines, setLines] = useSessionState<any[]>("lines", []),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false),
+    [busy, setLocalBusy] = useState(false),
     [v, setV] = useState(0),
     [receipt, setReceipt] = useState<any>(null),
-    [key, setKey] = useState(crypto.randomUUID()),
-    [payment, setPayment] = useState(""),
-    [customer, setCustomer] = useState("");
-  const { data: sales } = useData("/sales", v),
+    [key, setKey] = useSessionState("key", crypto.randomUUID()),
+    [payment, setPayment] = useSessionState("payment", ""),
+    [customer, setCustomer] = useSessionState("customer", "");
+  function setBusy(value: boolean) {
+    onBusyChange(value);
+    setLocalBusy(value);
+  }
+  useEffect(() => () => onBusyChange(false), [onBusyChange]);
+  const [reason, setReason] = useSessionState("reason", ""),
+    [method, setMethod] = useSessionState("method", "cash"),
+    [page, setPage] = useState(1),
+    [filters, setFilters] = useState(emptyFilters);
+  const { data: sales, error: historyError } = useData(
+      "/sales?" + historyParams(filters, page),
+      v,
+    ),
     { data: customers } = useData("/customers", v),
     { data: settings } = useData("/settings");
   function add(p: Part) {
@@ -38,9 +61,22 @@ export function Counter({ role }: { role: string }) {
     const x = await api("/carts", "POST", {
       ...(cart ? { id: cart.id } : {}),
       customerId: customer || null,
-      lines: lines.map(({ partId, qty }) => ({ partId, qty })),
+      reason,
+      lines: lines.map(({ partId, qty, override }) => ({
+        partId,
+        qty,
+        ...(override !== undefined ? { price: override } : {}),
+      })),
     });
     setCart(x);
+    setLines(
+      x.lines.map((l: any) => ({
+        ...l,
+        ...(lines.find((p) => p.partId === l.partId)?.override !== undefined
+          ? { override: l.price }
+          : {}),
+      })),
+    );
     setV(v + 1);
     return x;
   }
@@ -59,7 +95,13 @@ export function Counter({ role }: { role: string }) {
             <h2>Find a part</h2>
             <span className="badge">Scanner ready</span>
           </div>
-          <PartPicker onPick={add} />
+          <fieldset disabled={busy || checkout.current.pending}>
+            <PartPicker
+              onPick={add}
+              disabled={busy || checkout.current.pending}
+              contextKey={key}
+            />
+          </fieldset>
           <p className="hint">
             Search by part number, barcode or name. Confirm vehicle fitment
             before sale.
@@ -76,6 +118,9 @@ export function Counter({ role }: { role: string }) {
                 setCart(null);
                 setKey(crypto.randomUUID());
                 setPayment("");
+                setCustomer("");
+                setReason("");
+                setMethod("cash");
               }}
             >
               New sale
@@ -97,6 +142,7 @@ export function Counter({ role }: { role: string }) {
           </Field>
           <button
             className="text-button"
+            disabled={busy || checkout.current.pending}
             onClick={async () => {
               const name = prompt("Customer name");
               if (name)
@@ -120,9 +166,31 @@ export function Counter({ role }: { role: string }) {
                   <div>
                     <b>{l.name}</b>
                     <small>
-                      {l.sku} · {l.price} each
+                      {l.sku} · {l.override ?? l.price} each
                     </small>
                   </div>
+                  {role === "manager" && (
+                    <input
+                      aria-label={"Override price for " + l.sku}
+                      title="Manager selling price override"
+                      type="number"
+                      min="0"
+                      step=".01"
+                      disabled={busy || checkout.current.pending}
+                      value={l.override ?? ""}
+                      placeholder={l.price}
+                      onChange={(e) => {
+                        setLines(
+                          lines.map((x) =>
+                            x.partId === l.partId
+                              ? { ...x, override: e.target.value || undefined }
+                              : x,
+                          ),
+                        );
+                        setCart(invalidateCartTotals(cart));
+                      }}
+                    />
+                  )}
                   <input
                     aria-label={"Quantity for " + l.sku}
                     disabled={busy || checkout.current.pending}
@@ -157,6 +225,16 @@ export function Counter({ role }: { role: string }) {
               ))
             )}
           </div>
+          {lines.some((l) => l.override !== undefined) && (
+            <Field label="Reason for manager price override">
+              <input
+                disabled={busy || checkout.current.pending}
+                required
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </Field>
+          )}
           {cart?.total != null && (
             <div className="totals">
               <span>
@@ -198,7 +276,7 @@ export function Counter({ role }: { role: string }) {
               e.preventDefault();
               setBusy(true);
               setError("");
-              const method = new FormData(e.currentTarget).get("method");
+
               try {
                 setReceipt(
                   await checkout.current.complete(save, {
@@ -211,6 +289,9 @@ export function Counter({ role }: { role: string }) {
                 setCart(null);
                 setKey(crypto.randomUUID());
                 setPayment("");
+                setCustomer("");
+                setReason("");
+                setMethod("cash");
                 setV(v + 1);
               } catch (e: any) {
                 setError(e.message);
@@ -237,6 +318,8 @@ export function Counter({ role }: { role: string }) {
               <Field label="Payment method">
                 <select
                   name="method"
+                  value={method}
+                  onChange={(e) => setMethod(e.target.value)}
                   disabled={busy || checkout.current.pending}
                 >
                   <option value="cash">Cash</option>
@@ -244,7 +327,10 @@ export function Counter({ role }: { role: string }) {
                 </select>
               </Field>
             </div>
-            <button className="primary wide" disabled={busy || !lines.length}>
+            <button
+              className="primary wide"
+              disabled={busy || (!lines.length && !checkout.current.pending)}
+            >
               {busy
                 ? "Posting…"
                 : checkout.current.pending
@@ -254,6 +340,15 @@ export function Counter({ role }: { role: string }) {
           </form>
         </section>
       </div>
+      <HistoryFilters
+        value={filters}
+        statuses={["draft", "posted"]}
+        onChange={(f) => {
+          setFilters(f);
+          setPage(1);
+        }}
+      />
+      <Notice>{historyError}</Notice>
       <section className="panel">
         <div className="panel-title">
           <h2>Sales & saved drafts</h2>
@@ -287,10 +382,27 @@ export function Counter({ role }: { role: string }) {
                     onClick={async () => {
                       if (s.status === "draft") {
                         setCart(s);
-                        setLines(s.lines);
+                        setLines(
+                          s.lines.map((l: any) => ({
+                            ...l,
+                            ...(l.overrideReason ? { override: l.price } : {}),
+                          })),
+                        );
+                        setReason(
+                          s.lines.find((l: any) => l.overrideReason)
+                            ?.overrideReason ?? "",
+                        );
+                        setPayment("");
+                        setMethod("cash");
                         setCustomer(s.customer_id ?? "");
                         setKey(crypto.randomUUID());
-                      } else setReceipt(await api("/sales/" + s.id));
+                      } else {
+                        try {
+                          setReceipt(await api("/sales/" + s.id));
+                        } catch (e: any) {
+                          setError(e.message);
+                        }
+                      }
                     }}
                   >
                     {s.status === "draft" ? "Resume" : "View receipt"}
@@ -300,6 +412,7 @@ export function Counter({ role }: { role: string }) {
             ))}
           </tbody>
         </table>
+        <Pager page={page} onPage={setPage} count={sales?.length} />
       </section>
       {receipt && (
         <Receipt
@@ -315,7 +428,7 @@ export function Counter({ role }: { role: string }) {
     </>
   );
 }
-function Receipt({
+export function Receipt({
   sale,
   role,
   close,
@@ -371,6 +484,24 @@ function Receipt({
               {sale.settings?.currency} {sale.total}
             </b>
           </strong>
+          {sale.payment && (
+            <>
+              <span>
+                Payment method{" "}
+                <b>
+                  {sale.payment.method === "cash"
+                    ? "Cash"
+                    : "Recorded externally"}
+                </b>
+              </span>
+              <span>
+                Tendered <b>{sale.payment.tendered ?? "Not recorded"}</b>
+              </span>
+              <strong>
+                Change due <b>{sale.payment.change ?? "Not recorded"}</b>
+              </strong>
+            </>
+          )}
         </div>
       </div>
       <div className="form-actions">
@@ -423,7 +554,13 @@ function Receipt({
                     type="number"
                     name={l.partId}
                     min="0"
-                    max={l.qty}
+                    max={
+                      l.qty -
+                      (sale.returns ?? [])
+                        .flatMap((r: any) => r.lines)
+                        .filter((x: any) => x.partId === l.partId)
+                        .reduce((n: number, x: any) => n + x.qty, 0)
+                    }
                     defaultValue="0"
                   />
                 </Field>
@@ -456,8 +593,50 @@ function Receipt({
           </button>
         </form>
       )}
+      <Notice>{error}</Notice>
       {sale.returns?.length > 0 && (
-        <p>{sale.returns.length} return record(s) linked to this sale.</p>
+        <section className="return-history">
+          <h3>Return history</h3>
+          {sale.returns.map((r: any) => (
+            <div className="return-record" key={r.id}>
+              <b>
+                {short(r.id)} ·{" "}
+                {r.refund_status === "recorded"
+                  ? "Refund recorded"
+                  : "Refund pending"}
+              </b>
+              <p>
+                {r.reason} ·{" "}
+                {r.lines.reduce((n: number, l: any) => n + l.qty, 0)} units
+              </p>
+              {r.refund_reference && <small>{r.refund_reference}</small>}
+              {role === "manager" && r.refund_status === "pending" && (
+                <button
+                  disabled={busy}
+                  onClick={async () => {
+                    const reference = prompt(
+                      "Refund reference or voucher (money already returned outside this system)",
+                    );
+                    if (!reference) return;
+                    setBusy(true);
+                    try {
+                      await api("/returns/" + r.id + "/refund", "POST", {
+                        reference,
+                      });
+                      returned();
+                    } catch (e: any) {
+                      setError(e.message);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Mark external refund recorded
+                </button>
+              )}
+            </div>
+          ))}
+        </section>
       )}
     </Modal>
   );

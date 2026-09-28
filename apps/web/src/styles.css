@@ -934,3 +934,26 @@ fieldset {
     background: white;
   }
 }
+
+.history-filters {
+  align-items: end;
+  flex-wrap: wrap;
+}
+.history-filters .field {
+  margin: 0;
+  min-width: 150px;
+  flex: 1;
+}
+.return-record {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.return-record p {
+  margin: 6px 0;
+}
+.cart-line {
+  flex-wrap: wrap;
+}
+.cart-line input[title] {
+  width: 85px;
+}

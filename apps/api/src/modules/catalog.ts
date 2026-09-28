@@ -29,6 +29,23 @@ const schema = z.object({
 });
 async function save(tx: PoolClient, input: unknown, partId?: string) {
   const p = schema.parse(input);
+  if (
+    p.substitutes.includes(partId ?? "") ||
+    new Set(p.substitutes).size !== p.substitutes.length
+  )
+    throw new AppError(
+      400,
+      "Substitutes must be distinct parts, excluding this part.",
+    );
+  if (
+    p.substitutes.length &&
+    (
+      await tx.query("SELECT id FROM parts WHERE id=ANY($1::uuid[])", [
+        p.substitutes,
+      ])
+    ).rowCount !== p.substitutes.length
+  )
+    throw new AppError(400, "A substitute part does not exist.");
   const search = normalize([p.sku, p.name, p.brand, ...p.aliases].join(" "));
   const vals = [
     p.sku,
@@ -96,6 +113,15 @@ export async function catalogRoutes(app: FastifyInstance, pool: Pool) {
       )
     ).rows;
     return { items, total, page: q.page, limit: q.limit };
+  });
+  app.get("/api/parts/:id/substitutes", async (req) => {
+    const p = id.parse((req.params as any).id);
+    return (
+      await pool.query(
+        "SELECT p.* FROM parts p JOIN parts source ON source.id=$1 WHERE source.substitutes ? p.id::text ORDER BY p.sku",
+        [p],
+      )
+    ).rows;
   });
   for (const method of ["POST", "PUT"] as const)
     app.route({

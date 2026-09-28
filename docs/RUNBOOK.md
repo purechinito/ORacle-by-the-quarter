@@ -9,6 +9,6 @@
 7. Back up independently of app uptime. Use managed database backups and scheduled app snapshots as a portable supplement. Protect backups because they include password hashes and business data.
 8. Restore drills: create a separate empty database, run matching migrations, supply RESTORE_DATABASE_URL, then run the restore command. It refuses an occupied database, verifies stock reconciliation and invalidates sessions. Compare document counts and totals before switching traffic.
 9. Correct operational errors with manager adjustments/linked returns, never by editing stock balances in SQL. Cancel outstanding PO quantities without erasing received quantities.
-10. If a posting response is lost, retry with the same idempotency key through the API. Check transaction history before creating a replacement transaction in the UI. Do not assume an error means the transaction did not commit.
+10. If a posting response is lost, use Retry same sale, Recover receipt, Retry original return or Retry original change in the same browser tab. These preserve the exact original request. Sign back in as the same staff member if the session expires. Check searchable transaction history before creating a replacement transaction. Do not assume an error means the transaction did not commit.
 
 The local preview uses .data/postgres and randomly generated development credentials. Stop it gracefully with Ctrl-C. Keep .data and all backup files outside source control.

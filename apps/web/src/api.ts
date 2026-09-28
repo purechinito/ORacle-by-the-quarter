@@ -12,6 +12,8 @@ export async function api(path: string, method = "GET", body?: unknown) {
   });
   const data = await r.json();
   if (!r.ok) {
+    if (r.status === 401 && path !== "/login")
+      window.dispatchEvent(new Event("quarter:session-expired"));
     const error = new Error(data.error ?? "Request failed") as Error & {
       status: number;
     };

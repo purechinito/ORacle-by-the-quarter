@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { AppError, requireRole, transaction } from "../db";
 import { audit, id, key, money, once, qty, text } from "./common";
 import { move } from "./inventory";
+import { historyQuery, checkDates } from "./history";
 export function totals(lines: { price: string; qty: number }[], settings: any) {
   let subtotal = new Decimal(0),
     tax = new Decimal(0);
@@ -50,10 +51,23 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
   });
   app.get("/api/sales", async (req) => {
     requireRole(req.actor.role, ["manager", "counter"]);
+    const q = historyQuery
+      .extend({ status: z.enum(["draft", "posted", ""]).default("") })
+      .parse(req.query);
+    checkDates(q);
     return (
       await pool.query(
-        "SELECT s.*,c.name AS customer FROM sales s LEFT JOIN customers c ON c.id=s.customer_id WHERE ($1='manager' OR s.actor=$2) ORDER BY created_at DESC LIMIT 100",
-        [req.actor.role, req.actor.id],
+        "SELECT s.*,c.name AS customer FROM sales s LEFT JOIN customers c ON c.id=s.customer_id WHERE ($1='manager' OR s.actor=$2) AND ($3='' OR s.status=$3) AND ($4='' OR position(lower($4) in lower(s.id::text||' '||COALESCE(c.name,'Walk-in')||' '||s.lines::text))>0) AND ($5::date IS NULL OR COALESCE(s.posted_at,s.created_at)>=($5::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) AND ($6::date IS NULL OR COALESCE(s.posted_at,s.created_at)<(($6::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) ORDER BY COALESCE(s.posted_at,s.created_at) DESC,s.id DESC LIMIT $7 OFFSET $8",
+        [
+          req.actor.role,
+          req.actor.id,
+          q.status,
+          q.q,
+          q.from ?? null,
+          q.to ?? null,
+          q.limit,
+          (q.page - 1) * q.limit,
+        ],
       )
     ).rows;
   });
@@ -66,6 +80,13 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
       )
     ).rows[0];
     if (!r) throw new AppError(404, "Sale not found.");
+    r.payment =
+      (
+        await pool.query(
+          "SELECT amount,method,tendered,change FROM payments WHERE sale_id=$1",
+          [r.id],
+        )
+      ).rows[0] ?? null;
     r.returns = (
       await pool.query(
         "SELECT * FROM returns WHERE sale_id=$1 ORDER BY created_at",
@@ -111,7 +132,9 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
           ])
         ).rows[0];
         if (!p) throw new AppError(409, "Part is unavailable.");
-        if (l.price && l.price !== p.price) {
+        const overridden =
+          l.price !== undefined && !new Decimal(l.price).eq(p.price);
+        if (overridden) {
           requireRole(req.actor.role, ["manager"]);
           text.parse(b.reason);
         }
@@ -121,6 +144,7 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
           name: p.name,
           qty: l.qty,
           price: l.price ?? p.price,
+          ...(overridden ? { overrideReason: text.parse(b.reason) } : {}),
         });
       }
       const settings = (
@@ -206,8 +230,14 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
           ],
         );
         await tx.query(
-          "INSERT INTO payments(sale_id,amount,method) VALUES($1,$2,$3)",
-          [p, amount.total, b.method],
+          "INSERT INTO payments(sale_id,amount,method,tendered,change) VALUES($1,$2,$3,$4,$5)",
+          [
+            p,
+            amount.total,
+            b.method,
+            b.payment,
+            new Decimal(b.payment).sub(amount.total).toFixed(2),
+          ],
         );
         return {
           id: p,
@@ -217,6 +247,26 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
         };
       }),
     );
+  });
+  app.post("/api/returns/:id/refund", async (req) => {
+    requireRole(req.actor.role, ["manager"]);
+    const rid = id.parse((req.params as any).id),
+      b = z.object({ reference: text }).parse(req.body);
+    return transaction(pool, async (tx) => {
+      const r = (
+        await tx.query("SELECT * FROM returns WHERE id=$1 FOR UPDATE", [rid])
+      ).rows[0];
+      if (!r) throw new AppError(404, "Return not found.");
+      if (r.refund_status === "recorded") return r;
+      const updated = (
+        await tx.query(
+          "UPDATE returns SET refund_status='recorded',refund_reference=$1,refunded_at=now(),refunded_by=$2 WHERE id=$3 RETURNING *",
+          [b.reference, req.actor.id, rid],
+        )
+      ).rows[0];
+      await audit(tx, req.actor, "refund.recorded", rid);
+      return updated;
+    });
   });
   app.post("/api/sales/:id/return", async (req) => {
     requireRole(req.actor.role, ["manager"]);

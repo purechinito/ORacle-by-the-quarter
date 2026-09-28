@@ -1,7 +1,11 @@
-import { usePosting } from "../usePosting";
+import { usePosting, hasPendingPosting } from "../usePosting";
 import { useState } from "react";
 import { api } from "../api";
 import {
+  Pager,
+  HistoryFilters,
+  emptyFilters,
+  historyParams,
   Field,
   Modal,
   Notice,
@@ -12,10 +16,16 @@ import {
 } from "../components";
 export function Purchasing({ role }: { role: string }) {
   const [v, setV] = useState(0),
-    [open, setOpen] = useState(false),
+    [open, setOpen] = useState<any>(null),
     [receive, setReceive] = useState<any>(null),
-    [error, setError] = useState("");
-  const { data: orders, error: loadError } = useData("/purchases", v);
+    [error, setError] = useState(""),
+    [view, setView] = useState<any>(null),
+    [page, setPage] = useState(1),
+    [filters, setFilters] = useState(emptyFilters);
+  const { data: orders, error: loadError } = useData(
+    "/purchases?" + historyParams(filters, page),
+    v,
+  );
   return (
     <>
       <div className="toolbar">
@@ -23,11 +33,19 @@ export function Purchasing({ role }: { role: string }) {
           Purchase orders → partial receipts → shelf stock
         </span>
         {role === "manager" && (
-          <button className="primary" onClick={() => setOpen(true)}>
+          <button className="primary" onClick={() => setOpen({})}>
             + Purchase order
           </button>
         )}
       </div>
+      <HistoryFilters
+        value={filters}
+        statuses={["draft", "submitted", "partial", "received", "cancelled"]}
+        onChange={(f) => {
+          setFilters(f);
+          setPage(1);
+        }}
+      />
       <Notice>{error || loadError}</Notice>
       <section className="panel">
         <table>
@@ -64,6 +82,10 @@ export function Purchasing({ role }: { role: string }) {
                 </td>
                 <td>
                   <div className="row-actions">
+                    <button onClick={() => setView(o)}>View order</button>
+                    {o.status === "draft" && role === "manager" && (
+                      <button onClick={() => setOpen(o)}>Edit draft</button>
+                    )}
                     {o.status === "draft" && role === "manager" && (
                       <button
                         onClick={async () => {
@@ -82,9 +104,12 @@ export function Purchasing({ role }: { role: string }) {
                         Submit order
                       </button>
                     )}
-                    {["submitted", "partial"].includes(o.status) && (
+                    {(["submitted", "partial"].includes(o.status) ||
+                      hasPendingPosting("receipt:" + o.id)) && (
                       <button onClick={() => setReceive(o)}>
-                        Receive stock
+                        {hasPendingPosting("receipt:" + o.id)
+                          ? "Recover receipt"
+                          : "Receive stock"}
                       </button>
                     )}
                     {["draft", "submitted", "partial"].includes(o.status) &&
@@ -123,12 +148,50 @@ export function Purchasing({ role }: { role: string }) {
             need.
           </div>
         )}
+        <Pager page={page} onPage={setPage} count={orders?.length} />
       </section>
+      {view && (
+        <Modal
+          title={"Purchase order · " + short(view.id)}
+          onClose={() => setView(null)}
+        >
+          <p>
+            {view.supplier} · {view.status}
+          </p>
+          {view.cancel_reason && (
+            <Notice>Cancellation: {view.cancel_reason}</Notice>
+          )}
+          <table>
+            <thead>
+              <tr>
+                <th>Part</th>
+                <th>Ordered</th>
+                <th>Received</th>
+                {role === "manager" && <th>Unit cost</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {view.lines.map((l: any) => (
+                <tr key={l.part_id}>
+                  <td>
+                    {l.name}
+                    <small>{l.sku}</small>
+                  </td>
+                  <td>{l.qty}</td>
+                  <td>{l.received}</td>
+                  {role === "manager" && <td>{l.cost}</td>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Modal>
+      )}
       {open && (
         <NewOrder
-          close={() => setOpen(false)}
+          order={open}
+          close={() => setOpen(null)}
           saved={() => {
-            setOpen(false);
+            setOpen(null);
             setV(v + 1);
           }}
         />
@@ -146,127 +209,151 @@ export function Purchasing({ role }: { role: string }) {
     </>
   );
 }
-function NewOrder({ close, saved }: { close: () => void; saved: () => void }) {
-  const [lines, setLines] = useState<any[]>([]),
+function NewOrder({
+  order,
+  close,
+  saved,
+}: {
+  order: any;
+  close: () => void;
+  saved: () => void;
+}) {
+  const [lines, setLines] = useState<any[]>(
+      order.lines?.map((l: any) => ({ ...l, partId: l.part_id })) ?? [],
+    ),
     [error, setError] = useState(""),
     [v, setV] = useState(0),
-    [supplier, setSupplier] = useState(""),
+    [supplier, setSupplier] = useState(order.supplier_id ?? ""),
     [busy, setBusy] = useState(false);
   const { data: suppliers } = useData("/suppliers", v);
   return (
-    <Modal title="New purchase order" onClose={close}>
-      <Field label="Supplier">
-        <select value={supplier} onChange={(e) => setSupplier(e.target.value)}>
-          <option value="">Choose supplier</option>
-          {suppliers?.map((s: any) => (
-            <option value={s.id} key={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <button
-        className="text-button"
-        onClick={async () => {
-          const name = prompt("Supplier name");
-          if (name)
+    <Modal
+      title={order.id ? "Edit purchase draft" : "New purchase order"}
+      onClose={close}
+      canClose={!busy}
+    >
+      <fieldset disabled={busy}>
+        <Field label="Supplier">
+          <select
+            value={supplier}
+            onChange={(e) => setSupplier(e.target.value)}
+          >
+            <option value="">Choose supplier</option>
+            {suppliers?.map((s: any) => (
+              <option value={s.id} key={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <button
+          className="text-button"
+          onClick={async () => {
+            const name = prompt("Supplier name");
+            if (name)
+              try {
+                const s = await api("/suppliers", "POST", { name });
+                setSupplier(s.id);
+                setV(v + 1);
+              } catch (e: any) {
+                setError(e.message);
+              }
+          }}
+        >
+          + Add supplier
+        </button>
+        <PartPicker
+          disabled={busy}
+          onPick={(p: Part) => {
+            if (!lines.some((l) => l.partId === p.id))
+              setLines([
+                ...lines,
+                { partId: p.id, name: p.name, qty: 1, cost: "0.00" },
+              ]);
+          }}
+        />
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            setError("");
             try {
-              const s = await api("/suppliers", "POST", { name });
-              setSupplier(s.id);
-              setV(v + 1);
+              await api(
+                order.id ? "/purchases/" + order.id : "/purchases",
+                order.id ? "PUT" : "POST",
+                {
+                  supplierId: supplier,
+                  lines: lines.map(({ partId, qty, cost }) => ({
+                    partId,
+                    qty,
+                    cost,
+                  })),
+                },
+              );
+              saved();
             } catch (e: any) {
               setError(e.message);
+            } finally {
+              setBusy(false);
             }
-        }}
-      >
-        + Add supplier
-      </button>
-      <PartPicker
-        onPick={(p: Part) => {
-          if (!lines.some((l) => l.partId === p.id))
-            setLines([
-              ...lines,
-              { partId: p.id, name: p.name, qty: 1, cost: "0.00" },
-            ]);
-        }}
-      />
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          setError("");
-          try {
-            await api("/purchases", "POST", {
-              supplierId: supplier,
-              lines: lines.map(({ partId, qty, cost }) => ({
-                partId,
-                qty,
-                cost,
-              })),
-            });
-            saved();
-          } catch (e: any) {
-            setError(e.message);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        {lines.map((l, i) => (
-          <div className="purchase-line" key={l.partId}>
-            <b>{l.name}</b>
-            <Field label="Quantity">
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={l.qty}
-                onChange={(e) =>
-                  setLines(
-                    lines.map((x, j) =>
-                      i === j ? { ...x, qty: Number(e.target.value) } : x,
-                    ),
-                  )
-                }
-              />
-            </Field>
-            <Field label="Unit cost">
-              <input
-                type="number"
-                min="0"
-                step=".01"
-                value={l.cost}
-                onChange={(e) =>
-                  setLines(
-                    lines.map((x, j) =>
-                      i === j ? { ...x, cost: e.target.value } : x,
-                    ),
-                  )
-                }
-              />
-            </Field>
+          }}
+        >
+          {lines.map((l, i) => (
+            <div className="purchase-line" key={l.partId}>
+              <b>{l.name}</b>
+              <Field label="Quantity">
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={l.qty}
+                  onChange={(e) =>
+                    setLines(
+                      lines.map((x, j) =>
+                        i === j ? { ...x, qty: Number(e.target.value) } : x,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+              <Field label="Unit cost">
+                <input
+                  type="number"
+                  min="0"
+                  step=".01"
+                  value={l.cost}
+                  onChange={(e) =>
+                    setLines(
+                      lines.map((x, j) =>
+                        i === j ? { ...x, cost: e.target.value } : x,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+              <button
+                type="button"
+                aria-label={"Remove " + l.name}
+                onClick={() => setLines(lines.filter((_, j) => i !== j))}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <Notice>{error}</Notice>
+          <div className="form-actions">
+            <button type="button" onClick={close}>
+              Cancel
+            </button>
             <button
-              type="button"
-              aria-label={"Remove " + l.name}
-              onClick={() => setLines(lines.filter((_, j) => i !== j))}
+              className="primary"
+              disabled={busy || !supplier || !lines.length}
             >
-              ×
+              Save draft order
             </button>
           </div>
-        ))}
-        <Notice>{error}</Notice>
-        <div className="form-actions">
-          <button type="button" onClick={close}>
-            Cancel
-          </button>
-          <button
-            className="primary"
-            disabled={busy || !supplier || !lines.length}
-          >
-            Save draft order
-          </button>
-        </div>
-      </form>
+        </form>
+      </fieldset>
     </Modal>
   );
 }

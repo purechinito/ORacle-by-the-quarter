@@ -12,3 +12,8 @@ export function usePosting(scope: string) {
     });
   return ref.current;
 }
+export function hasPendingPosting(scope: string) {
+  return (
+    sessionStorage.getItem("quarter:pending:" + actorId + ":" + scope) !== null
+  );
+}

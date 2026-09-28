@@ -4,14 +4,23 @@ import { Field, Notice, useData } from "./components";
 import { Catalog } from "./features/Catalog";
 import { Counter } from "./features/Counter";
 import { Purchasing } from "./features/Purchasing";
-import { Stock, Settings, Reports } from "./features/Operations";
+import { Stock, Settings, Reports, Audit } from "./features/Operations";
 export default function App() {
   const [user, setUser] = useState<any>(null),
     [loading, setLoading] = useState(true),
     [page, setPage] = useState("Overview"),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [transactionBusy, setTransactionBusy] = useState(false);
   useEffect(() => {
+    const expired = () => {
+      setUser(null);
+      setPage("Overview");
+      setError(
+        "Your session ended. Sign in again to continue; saved checkout recovery is kept.",
+      );
+    };
+    window.addEventListener("quarter:session-expired", expired);
     api("/me")
       .then((x) => {
         setUser(x.user);
@@ -19,6 +28,7 @@ export default function App() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    return () => window.removeEventListener("quarter:session-expired", expired);
   }, []);
   if (loading) return <div className="loading">Opening your workspace…</div>;
   if (!user)
@@ -95,7 +105,12 @@ export default function App() {
     ...(user.role !== "counter" ? [["Purchasing", "↓"]] : []),
     ["Stock movements", "⇄"],
     ["Reports", "▤"],
-    ...(user.role === "manager" ? [["Settings", "⚙"]] : []),
+    ...(user.role === "manager"
+      ? [
+          ["Activity log", "≡"],
+          ["Settings", "⚙"],
+        ]
+      : []),
   ];
   return (
     <div className="app">
@@ -114,6 +129,12 @@ export default function App() {
           {pages.map(([name, icon]) => (
             <button
               key={name}
+              disabled={transactionBusy}
+              title={
+                transactionBusy
+                  ? "Wait for the current sale to finish saving."
+                  : undefined
+              }
               aria-current={page === name ? "page" : undefined}
               className={page === name ? "active" : ""}
               onClick={() => setPage(name)}
@@ -132,6 +153,7 @@ export default function App() {
           </div>
           <button
             aria-label="Sign out"
+            disabled={transactionBusy}
             title="Sign out"
             onClick={async () => {
               await api("/logout", "POST");
@@ -178,6 +200,8 @@ export default function App() {
                       "Stock movements":
                         "Every movement has a reason and a record.",
                       Reports: "The numbers behind your daily operations.",
+                      "Activity log":
+                        "Who changed what, with the record to follow.",
                       Settings: "Make this workspace work for your shop.",
                     } as any
                   )[page]
@@ -191,13 +215,15 @@ export default function App() {
           ) : page === "Parts" ? (
             <Catalog role={user.role} />
           ) : page === "Counter sales" ? (
-            <Counter role={user.role} />
+            <Counter role={user.role} onBusyChange={setTransactionBusy} />
           ) : page === "Purchasing" ? (
             <Purchasing role={user.role} />
           ) : page === "Stock movements" ? (
             <Stock role={user.role} />
           ) : page === "Reports" ? (
             <Reports role={user.role} />
+          ) : page === "Activity log" ? (
+            <Audit />
           ) : (
             <Settings />
           )}

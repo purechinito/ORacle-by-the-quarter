@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api";
-import { Field, Modal, Notice, useData, type Part } from "../components";
+import {
+  Field,
+  Modal,
+  Notice,
+  PartPicker,
+  useData,
+  type Part,
+} from "../components";
 export function Catalog({ role }: { role: string }) {
   const [q, setQ] = useState(""),
     [page, setPage] = useState(1),
@@ -205,9 +212,32 @@ function PartEditor({
   saved: () => void;
 }) {
   const [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [substitutes, setSubstitutes] = useState<Part[]>([]),
+    [subLoading, setSubLoading] = useState(!!part.substitutes?.length);
+  useEffect(() => {
+    if (!part.id || !part.substitutes?.length) return;
+    let live = true;
+    api("/parts/" + part.id + "/substitutes")
+      .then((x) => {
+        if (live) {
+          setSubstitutes(x);
+          setSubLoading(false);
+        }
+      })
+      .catch((e) => {
+        if (live) setError(e.message);
+      });
+    return () => {
+      live = false;
+    };
+  }, [part.id]);
   return (
-    <Modal title={part.id ? "Part details" : "Add a part"} onClose={close}>
+    <Modal
+      canClose={!busy}
+      title={part.id ? "Part details" : "Add a part"}
+      onClose={close}
+    >
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -244,7 +274,7 @@ function PartEditor({
                   .map((x) => x.trim())
                   .filter(Boolean),
                 fitments,
-                substitutes: part.substitutes ?? [],
+                substitutes: substitutes.map((p) => p.id),
               },
             );
             saved();
@@ -294,6 +324,44 @@ function PartEditor({
                 .join("\n")}
             />
           </Field>
+          <h3>Compatible alternatives</h3>
+          <p className="hint">
+            Link only parts your team has verified as suitable substitutes.
+            Check the vehicle before substituting.
+          </p>
+          {!readonly && (
+            <PartPicker
+              disabled={busy || readonly}
+              onPick={(p) => {
+                if (p.id !== part.id && !substitutes.some((x) => x.id === p.id))
+                  setSubstitutes([...substitutes, p]);
+              }}
+            />
+          )}
+          {subLoading ? (
+            <p>Loading alternatives…</p>
+          ) : (
+            substitutes.map((p) => (
+              <div className="return-line" key={p.id}>
+                <span>
+                  <b>{p.name}</b>
+                  <small>
+                    {p.sku} · {p.stock} on hand · {p.price}
+                  </small>
+                </span>
+                {!readonly && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSubstitutes(substitutes.filter((x) => x.id !== p.id))
+                    }
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))
+          )}
           <label className="check">
             <input
               type="checkbox"
@@ -309,7 +377,7 @@ function PartEditor({
             Close
           </button>
           {!readonly && (
-            <button className="primary" disabled={busy}>
+            <button className="primary" disabled={busy || subLoading}>
               {busy ? "Saving…" : "Save part"}
             </button>
           )}
@@ -358,33 +426,36 @@ export function ImportDialog({
     <Modal
       title={stock ? "Import opening stock" : "Import parts"}
       onClose={close}
+      canClose={!busy}
     >
       <p>
         {stock
           ? "Required columns: sku,qty. Preview opening quantities before posting. Each part may receive opening stock only once."
           : "Required columns: sku,name,price. Optional: brand, category, bin, reorder, aliases. Catalog records only; stock is separate."}
       </p>
-      <Field label="Choose a CSV file">
-        <input
-          type="file"
-          accept=".csv,text/csv"
-          onChange={async (e) => {
-            setCsv((await e.target.files?.[0]?.text()) ?? "");
-            setPreview(null);
-          }}
-        />
-      </Field>
-      <Field label="CSV preview">
-        <textarea
-          rows={7}
-          value={csv}
-          onChange={(e) => {
-            setCsv(e.target.value);
-            setPreview(null);
-          }}
-          placeholder={"sku,name,price\nFILTER-001,Oil filter,12.50"}
-        />
-      </Field>
+      <fieldset disabled={busy}>
+        <Field label="Choose a CSV file">
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={async (e) => {
+              setCsv((await e.target.files?.[0]?.text()) ?? "");
+              setPreview(null);
+            }}
+          />
+        </Field>
+        <Field label="CSV preview">
+          <textarea
+            rows={7}
+            value={csv}
+            onChange={(e) => {
+              setCsv(e.target.value);
+              setPreview(null);
+            }}
+            placeholder={"sku,name,price\nFILTER-001,Oil filter,12.50"}
+          />
+        </Field>
+      </fieldset>
       <Notice>{error}</Notice>
       {preview && (
         <div className="import-result">
@@ -397,7 +468,9 @@ export function ImportDialog({
         </div>
       )}
       <div className="form-actions">
-        <button onClick={close}>Cancel</button>
+        <button disabled={busy} onClick={close}>
+          Cancel
+        </button>
         {preview && !preview.errors.length ? (
           <button disabled={busy} className="primary" onClick={() => run(true)}>
             Import {preview.count} parts

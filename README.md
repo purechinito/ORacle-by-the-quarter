@@ -18,12 +18,14 @@ The preview starts with **60 synthetic demo parts** and explicitly labeled openi
 ## What works
 
 - Individual staff logins; manager, counter and stock roles enforced on the server.
-- Server-paginated part search, barcode/OEM aliases, vehicle fitment filters, part maintenance and catalog CSV import with validation.
+- Server-paginated part search, barcode/OEM aliases, vehicle fitment filters, verified substitute links, part maintenance and catalog CSV import with validation.
 - Separate preview-first opening-stock CSV import; manager adjustments and immutable stock movements.
-- Suppliers, draft/submitted purchase orders, partial receipts, outstanding cancellation and over-receipt protection.
-- Saved sales carts, customers, cash/external-payment records, decimal totals, printable operational receipts and linked restockable/damaged returns.
-- Shop settings, operational totals, stock export, audit API and safe retry protection for postings.
+- Suppliers, editable purchase drafts, submitted orders, partial receipts, recorded cancellation reasons and over-receipt protection.
+- Saved sales carts, customers, manager price overrides with a reason, cash/external-payment records, decimal totals, printable receipts showing tender/change, and linked restockable/damaged returns with external-refund tracking.
+- Shop settings, operational totals, stock export, searchable activity log, paginated history and safe retry protection for postings. Carts and uncertain attempts survive navigation and reload in the same tab.
 - Backup snapshots and restore into an empty database, with stock reconciliation.
+
+Start with [the shop walkthrough](docs/SHOP-WALKTHROUGH.md) and the sample [catalog CSV](examples/parts-template.csv) and [opening stock CSV](examples/opening-stock-template.csv). Replace the sample rows with approved business data.
 
 See [coverage and limitations](docs/COVERAGE.md), [runbook](docs/RUNBOOK.md), [pilot checklist](docs/PILOT.md), the [approved design](docs/superpowers/specs/2026-09-28-auto-supply-erp-design.md) and [implementation plan](docs/superpowers/plans/2026-09-28-auto-supply-erp.md).
 
@@ -36,6 +38,8 @@ npm run build
 ```
 
 Tests start isolated PostgreSQL clusters and cover real API/database behavior, 5,000 synthetic parts, stock races, duplicate submissions and restore. They require permission to start local processes and allocate PostgreSQL shared memory.
+
+The 32 automated checks pass locally; type checking and production build also pass. An independent source review found no remaining important issues in the revised pilot workflows.
 
 Browser tests are provided but were not executed in the authoring environment because a saved browser permission blocked local preview access. To run them yourself with the local preview running, set `ERP_TEST_USERNAME` and `ERP_TEST_PASSWORD`, then run `npm run test:e2e` after installing the Playwright Chromium browser. Use a disposable demo database.
 

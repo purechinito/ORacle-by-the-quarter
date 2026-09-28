@@ -3,6 +3,7 @@ import type { Pool } from "pg";
 import { z } from "zod";
 import { AppError, requireRole, transaction } from "../db";
 import { audit, money, text } from "./common";
+import { historyQuery, checkDates } from "./history";
 export const csvCell = (x: unknown) =>
   '"' +
   String(x ?? "")
@@ -70,14 +71,8 @@ export async function reportsRoutes(app: FastifyInstance, pool: Pool) {
     });
   });
   app.get("/api/reports", async (req) => {
-    const q = z
-      .object({
-        from: z.string().date().optional(),
-        to: z.string().date().optional(),
-      })
-      .parse(req.query);
-    if (q.from && q.to && q.from > q.to)
-      throw new AppError(400, "Start date must precede end date.");
+    const q = historyQuery.parse(req.query);
+    checkDates(q);
     const settings = (await pool.query("SELECT data FROM settings WHERE id=1"))
       .rows[0].data;
     const args = [q.from ?? null, q.to ?? null, settings.timezone ?? "UTC"];
@@ -104,8 +99,8 @@ export async function reportsRoutes(app: FastifyInstance, pool: Pool) {
       await pool.query(
         "SELECT id,total,posted_at FROM sales WHERE " +
           where +
-          " ORDER BY posted_at DESC LIMIT 25",
-        args,
+          " ORDER BY posted_at DESC,id DESC LIMIT $4 OFFSET $5",
+        [...args, q.limit, (q.page - 1) * q.limit],
       )
     ).rows;
     const paid = (
@@ -163,9 +158,12 @@ export async function reportsRoutes(app: FastifyInstance, pool: Pool) {
   });
   app.get("/api/audit", async (req) => {
     requireRole(req.actor.role, ["manager"]);
+    const q = historyQuery.parse(req.query);
+    checkDates(q);
     return (
       await pool.query(
-        "SELECT a.*,u.username FROM audit_events a JOIN users u ON u.id=a.actor ORDER BY a.id DESC LIMIT 100",
+        "SELECT a.*,u.username FROM audit_events a JOIN users u ON u.id=a.actor WHERE ($1='' OR position(lower($1) in lower(a.action||' '||a.record_id||' '||u.username))>0) AND ($2::date IS NULL OR a.created_at>=($2::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) AND ($3::date IS NULL OR a.created_at<(($3::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) ORDER BY a.id DESC LIMIT $4 OFFSET $5",
+        [q.q, q.from ?? null, q.to ?? null, q.limit, (q.page - 1) * q.limit],
       )
     ).rows;
   });
