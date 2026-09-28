@@ -5,6 +5,7 @@ import Decimal from "decimal.js";
 import { randomUUID } from "node:crypto";
 import { AppError, requireRole, transaction } from "../db";
 import { audit, id, key, money, once, qty, text } from "./common";
+import { requireActiveParty } from "./relationships";
 import { move } from "./inventory";
 import { historyQuery, checkDates } from "./history";
 export function totals(lines: { price: string; qty: number }[], settings: any) {
@@ -31,24 +32,6 @@ export function totals(lines: { price: string; qty: number }[], settings: any) {
   };
 }
 export async function salesRoutes(app: FastifyInstance, pool: Pool) {
-  app.get(
-    "/api/customers",
-    async () =>
-      (await pool.query("SELECT * FROM customers ORDER BY name LIMIT 500"))
-        .rows,
-  );
-  app.post("/api/customers", async (req) => {
-    requireRole(req.actor.role, ["manager", "counter"]);
-    const b = z
-      .object({ name: text, phone: z.string().max(80).default("") })
-      .parse(req.body);
-    return (
-      await pool.query(
-        "INSERT INTO customers(name,phone) VALUES($1,$2) RETURNING *",
-        [b.name, b.phone],
-      )
-    ).rows[0];
-  });
   app.get("/api/sales", async (req) => {
     requireRole(req.actor.role, ["manager", "counter"]);
     const q = historyQuery
@@ -124,6 +107,7 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
         )
           throw new AppError(409, "Cart is unavailable or already posted.");
       }
+      await requireActiveParty(tx, "customers", b.customerId);
       const ls = [];
       for (const l of b.lines) {
         const p = (
@@ -200,6 +184,7 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
           (sale.actor !== req.actor.id && req.actor.role !== "manager")
         )
           throw new AppError(409, "Sale is not a draft you can post.");
+        await requireActiveParty(tx, "customers", sale.customer_id);
         const settings = (
           await tx.query("SELECT data FROM settings WHERE id=1 FOR SHARE")
         ).rows[0].data;

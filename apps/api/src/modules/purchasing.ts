@@ -4,6 +4,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { AppError, requireRole, transaction } from "../db";
 import { audit, id, key, lines, money, once, qty, text } from "./common";
+import { requireActiveParty } from "./relationships";
 import { move } from "./inventory";
 import { historyQuery, checkDates } from "./history";
 const orderSchema = z.object({
@@ -18,19 +19,6 @@ const orderSchema = z.object({
     ),
 });
 export async function purchasingRoutes(app: FastifyInstance, pool: Pool) {
-  app.get("/api/suppliers", async (req) => {
-    requireRole(req.actor.role, ["manager", "stock"]);
-    return (await pool.query("SELECT * FROM suppliers ORDER BY name")).rows;
-  });
-  app.post("/api/suppliers", async (req) => {
-    requireRole(req.actor.role, ["manager"]);
-    const b = z.object({ name: text }).parse(req.body);
-    return (
-      await pool.query("INSERT INTO suppliers(name) VALUES($1) RETURNING *", [
-        b.name,
-      ])
-    ).rows[0];
-  });
   app.get("/api/purchases", async (req) => {
     requireRole(req.actor.role, ["manager", "stock"]);
     const q = historyQuery
@@ -70,6 +58,7 @@ export async function purchasingRoutes(app: FastifyInstance, pool: Pool) {
     requireRole(req.actor.role, ["manager"]);
     const b = orderSchema.parse(req.body);
     return transaction(pool, async (tx) => {
+      await requireActiveParty(tx, "suppliers", b.supplierId);
       const p = (
         await tx.query(
           "INSERT INTO purchases(supplier_id,status) VALUES($1,'draft') RETURNING *",
@@ -97,6 +86,7 @@ export async function purchasingRoutes(app: FastifyInstance, pool: Pool) {
       ).rows[0];
       if (!current || current.status !== "draft")
         throw new AppError(409, "Only draft orders can be edited.");
+      await requireActiveParty(tx, "suppliers", b.supplierId);
       await tx.query("DELETE FROM purchase_lines WHERE purchase_id=$1", [p]);
       for (const l of b.lines)
         await tx.query(
@@ -117,6 +107,14 @@ export async function purchasingRoutes(app: FastifyInstance, pool: Pool) {
     requireRole(req.actor.role, ["manager"]);
     const p = id.parse((req.params as any).id);
     return transaction(pool, async (tx) => {
+      const order = (
+        await tx.query(
+          "SELECT supplier_id FROM purchases WHERE id=$1 FOR UPDATE",
+          [p],
+        )
+      ).rows[0];
+      if (!order) throw new AppError(404, "Order not found.");
+      await requireActiveParty(tx, "suppliers", order.supplier_id);
       const r = await tx.query(
         "UPDATE purchases SET status='submitted' WHERE id=$1 AND status='draft' RETURNING *",
         [p],

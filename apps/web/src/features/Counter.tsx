@@ -1,3 +1,4 @@
+import { PartyPicker } from "../PartyPicker";
 import { pesos, phDateTime } from "../locale";
 import { sessionStore, useSessionState } from "../session";
 import { usePosting } from "../usePosting";
@@ -48,7 +49,6 @@ export function Counter({
       "/sales?" + historyParams(filters, page),
       v,
     ),
-    { data: customers } = useData("/customers", v),
     { data: settings } = useData("/settings");
   function add(p: Part) {
     if (checkout.current.pending || busy) return;
@@ -127,20 +127,12 @@ export function Counter({
               New sale
             </button>
           </div>
-          <Field label="Customer">
-            <select
-              disabled={busy || checkout.current.pending}
-              value={customer}
-              onChange={(e) => setCustomer(e.target.value)}
-            >
-              <option value="">Walk-in customer</option>
-              {customers?.map((c: any) => (
-                <option value={c.id} key={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <PartyPicker
+            kind="customers"
+            value={customer}
+            onChange={setCustomer}
+            disabled={busy || checkout.current.pending}
+          />
           <button
             className="text-button"
             disabled={busy || checkout.current.pending}

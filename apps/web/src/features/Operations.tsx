@@ -1,3 +1,4 @@
+import { Staff } from "./Staff";
 import { pesos, phDateTime } from "../locale";
 import { usePosting } from "../usePosting";
 import { Receipt } from "./Counter";
@@ -211,8 +212,7 @@ export function Settings() {
   const [v, setV] = useState(0),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
-  const { data, error } = useData("/settings", v),
-    { data: users } = useData("/users", v);
+  const { data, error } = useData("/settings", v);
   return (
     <>
       <Notice>{error || message}</Notice>
@@ -293,61 +293,7 @@ export function Settings() {
             </form>
           )}
         </section>
-        <section className="panel pad">
-          <h2>Staff accounts</h2>
-          <div className="staff-list">
-            {users?.map((u: any) => (
-              <div key={u.id}>
-                <span className="avatar">{u.username[0].toUpperCase()}</span>
-                <b>{u.username}</b>
-                <span className="badge neutral">{u.role}</span>
-              </div>
-            ))}
-          </div>
-          <h3>Add a staff account</h3>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              const form = e.currentTarget;
-              setBusy(true);
-              try {
-                await api(
-                  "/users",
-                  "POST",
-                  Object.fromEntries(new FormData(form)),
-                );
-                form.reset();
-                setV(v + 1);
-                setMessage("Staff account created.");
-              } catch (e: any) {
-                setMessage(e.message);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            <Field label="Username">
-              <input name="username" required minLength={2} />
-            </Field>
-            <Field label="Password (at least 12 characters)">
-              <input
-                name="password"
-                type="password"
-                required
-                minLength={12}
-                autoComplete="new-password"
-              />
-            </Field>
-            <Field label="Role">
-              <select name="role">
-                <option value="counter">Counter staff</option>
-                <option value="stock">Stock clerk</option>
-                <option value="manager">Manager</option>
-              </select>
-            </Field>
-            <button disabled={busy}>Create account</button>
-          </form>
-        </section>
+        <Staff />
       </div>
     </>
   );

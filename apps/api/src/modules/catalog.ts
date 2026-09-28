@@ -1,9 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import type { Pool, PoolClient } from "pg";
 import { z } from "zod";
-import { parse } from "csv-parse/sync";
+import { parseImportCsv } from "../csv";
 import { AppError, requireRole, transaction } from "../db";
 import { audit, id, money, text } from "./common";
+import { assertPesoCurrency } from "../currency";
 const normalize = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
 const fit = z
   .object({
@@ -28,6 +29,7 @@ const schema = z.object({
   substitutes: z.array(id).max(50).default([]),
 });
 async function save(tx: PoolClient, input: unknown, partId?: string) {
+  assertPesoCurrency(input);
   const p = schema.parse(input);
   if (
     p.substitutes.includes(partId ?? "") ||
@@ -143,15 +145,7 @@ export async function catalogRoutes(app: FastifyInstance, pool: Pool) {
   app.post("/api/import/preview", async (req) => {
     requireRole(req.actor.role, ["manager"]);
     const { csv } = z.object({ csv: z.string().max(4000000) }).parse(req.body);
-    let raw: any[];
-    try {
-      raw = parse(csv, { columns: true, skip_empty_lines: true, bom: true });
-    } catch {
-      throw new AppError(
-        400,
-        "CSV could not be parsed. Check quotes and columns.",
-      );
-    }
+    const raw = parseImportCsv(csv);
     if (raw.length > 10000)
       throw new AppError(400, "Import at most 10,000 rows per batch.");
     const rows: any[] = [],
@@ -163,6 +157,12 @@ export async function catalogRoutes(app: FastifyInstance, pool: Pool) {
       all.flatMap((x) => x.aliases.map((a: string) => a.trim().toLowerCase())),
     );
     raw.forEach((r, i) => {
+      try {
+        assertPesoCurrency(r);
+      } catch {
+        errors.push("Row " + (i + 2) + ": currency must be PHP.");
+        return;
+      }
       const v = schema.safeParse({
         ...r,
         reorder: r.reorder ? Number(r.reorder) : 0,

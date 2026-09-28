@@ -1,3 +1,4 @@
+import { PartyPicker } from "../PartyPicker";
 import { pesos } from "../locale";
 import { usePosting, hasPendingPosting } from "../usePosting";
 import { useState } from "react";
@@ -226,7 +227,6 @@ function NewOrder({
     [v, setV] = useState(0),
     [supplier, setSupplier] = useState(order.supplier_id ?? ""),
     [busy, setBusy] = useState(false);
-  const { data: suppliers } = useData("/suppliers", v);
   return (
     <Modal
       title={order.id ? "Edit purchase draft" : "New purchase order"}
@@ -234,19 +234,12 @@ function NewOrder({
       canClose={!busy}
     >
       <fieldset disabled={busy}>
-        <Field label="Supplier">
-          <select
-            value={supplier}
-            onChange={(e) => setSupplier(e.target.value)}
-          >
-            <option value="">Choose supplier</option>
-            {suppliers?.map((s: any) => (
-              <option value={s.id} key={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <PartyPicker
+          kind="suppliers"
+          value={supplier}
+          onChange={setSupplier}
+          disabled={busy}
+        />
         <button
           className="text-button"
           onClick={async () => {

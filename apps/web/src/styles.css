@@ -957,3 +957,30 @@ fieldset {
 .cart-line input[title] {
   width: 85px;
 }
+
+.party-picker { margin: 12px 0; }
+.selected-party { border-left: 3px solid var(--accent, #cc6741); padding: 8px 12px; background: #f5f3ed; margin: 8px 0; }
+.selected-party small { display: block; margin-top: 4px; }
+.record-summary { padding: 18px; background: #f5f3ed; border-radius: 8px; margin: 12px 0 20px; }
+.table-scroll { overflow-x: auto; }
+.staff-record { padding: 15px 0; border-bottom: 1px solid #e1e1d9; }
+.staff-identity { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.staff-identity small { display:block; margin-top:4px; color:#626760; }
+.staff-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.staff-actions button { padding:7px 10px; font-size:12px; }
+.finance-basis { display:flex; gap:18px; align-items:center; padding:16px 20px; border:1px solid #d6d9cd; background:#eaf0e2; margin-bottom:20px; font-size:13px; }
+.finance-basis b { white-space:nowrap; }
+.finance-tabs { display:flex; gap:5px; border-bottom:1px solid #d7dbd1; margin-bottom:24px; overflow:auto; }
+.finance-tabs button { border:0; background:transparent; border-radius:0; padding:12px 18px; white-space:nowrap; }
+.finance-tabs button.active { border-bottom:3px solid #cf683e; color:#273c2a; font-weight:700; }
+.row-actions { display:flex; flex-wrap:wrap; gap:5px; }
+.row-actions button { padding:6px 10px; }
+.journal-line { display:grid; grid-template-columns:1.7fr 1.3fr 1fr 1fr auto; gap:10px; align-items:end; border-bottom:1px solid #e2e3dc; padding-bottom:14px; margin-bottom:14px; }
+.journal-line input,.journal-line select { min-width:0; width:100%; }
+.journal-line .field { min-width:0; margin:0; }
+.journal-totals { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:25px; padding:20px 0; }
+.journal-totals span { display:flex; flex-direction:column; gap:6px; font-size:12px; color:#626760; }
+.journal-totals b { font-size:18px; color:#233827; font-variant-numeric:tabular-nums; }
+.financial-table td:not(:first-child),.financial-table th:not(:first-child) { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.financial-table tfoot { background:#edf0e7; }
+@media(max-width:800px){.journal-line{grid-template-columns:1fr 1fr}.finance-basis{display:block}.finance-basis b{display:block;margin-bottom:8px}}

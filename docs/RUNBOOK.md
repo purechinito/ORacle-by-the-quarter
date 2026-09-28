@@ -14,3 +14,14 @@
 The local preview uses .data/postgres and randomly generated development credentials. Stop it gracefully with Ctrl-C. Keep .data and all backup files outside source control.
 
 Migration 006 enforces Philippine operation. It refuses an existing non-PHP configuration or posted sales with non-PHP/unknown currency. Never bypass this guard by changing a currency label: use a deliberate, reviewed data migration or a fresh peso database. Matching-schema snapshot restores also enforce PHP.
+
+
+## Added ERP foundations
+
+Customers and Suppliers provide searchable, paginated directories, Philippine address/contact fields, manager-only private identifiers, record history and active/inactive controls. Terms and credit limits are recorded for setup; credit trading is not yet enabled. Inactive parties cannot be selected for new sales or purchase commitments. Existing transaction history remains available under its normal role restrictions.
+
+Settings → Staff & access lets managers deactivate/reactivate staff, change roles, reset passwords and revoke sessions with reasons. These changes sign out affected devices. Another manager must alter your own access; at least one active manager must remain.
+
+See FINANCE.md for the manual ledger. Do not treat it as automatically reconciled operational accounting. Review inventory valuation and the opening accounting cutoff before integrating existing stock or sales.
+
+Migration007 adds PHP-only columns to existing monetary records. Explicit currency/currencyCode labels at API, CSV and restore boundaries must be PHP; a foreign label is rejected without conversion. CSV rows may omit currency under the application's peso-only batch contract, or supply PHP explicitly. Migrations008–010 add party profiles, staff versions and manual finance. Backups must use matching migrations and now include financial records.

@@ -1,3 +1,5 @@
+import { Finance } from "./features/Finance";
+import { Relationships } from "./features/Relationships";
 import { pesos, phDate, phDateTime } from "./locale";
 import { useEffect, useState } from "react";
 import { api, setCsrf } from "./api";
@@ -105,9 +107,12 @@ export default function App() {
     ...(user.role !== "stock" ? [["Counter sales", "↗"]] : []),
     ...(user.role !== "counter" ? [["Purchasing", "↓"]] : []),
     ["Stock movements", "⇄"],
+    ...(user.role !== "stock" ? [["Customers", "◎"]] : []),
+    ...(user.role !== "counter" ? [["Suppliers", "◇"]] : []),
     ["Reports", "▤"],
     ...(user.role === "manager"
       ? [
+          ["Finance", "▥"],
           ["Activity log", "≡"],
           ["Settings", "⚙"],
         ]
@@ -195,7 +200,13 @@ export default function App() {
                         "From supplier order to shelf, without losing track.",
                       "Stock movements":
                         "Every movement has a reason and a record.",
+                      Customers:
+                        "Contacts, account details and the history behind every sale.",
+                      Suppliers:
+                        "The people and businesses that keep your shelves supplied.",
                       Reports: "The numbers behind your daily operations.",
+                      Finance:
+                        "Balanced entries. Clear periods. A traceable ledger in pesos.",
                       "Activity log":
                         "Who changed what, with the record to follow.",
                       Settings: "Make this workspace work for your shop.",
@@ -216,8 +227,14 @@ export default function App() {
             <Purchasing role={user.role} />
           ) : page === "Stock movements" ? (
             <Stock role={user.role} />
+          ) : page === "Customers" ? (
+            <Relationships kind="customers" role={user.role} />
+          ) : page === "Suppliers" ? (
+            <Relationships kind="suppliers" role={user.role} />
           ) : page === "Reports" ? (
             <Reports role={user.role} />
+          ) : page === "Finance" ? (
+            <Finance onBusyChange={setTransactionBusy} />
           ) : page === "Activity log" ? (
             <Audit />
           ) : (

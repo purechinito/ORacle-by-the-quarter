@@ -1,20 +1,16 @@
 import type { FastifyInstance } from "fastify";
 import type { Pool } from "pg";
 import { z } from "zod";
-import { parse } from "csv-parse/sync";
+import { parseImportCsv } from "../csv";
 import { AppError, requireRole, transaction } from "../db";
 import { id, qty } from "./common";
 import { move } from "./inventory";
+import { assertPesoCurrency } from "../currency";
 export async function openingImportRoutes(app: FastifyInstance, pool: Pool) {
   app.post("/api/stock-import/preview", async (req) => {
     requireRole(req.actor.role, ["manager"]);
     const { csv } = z.object({ csv: z.string().max(4000000) }).parse(req.body);
-    let raw: any[];
-    try {
-      raw = parse(csv, { columns: true, bom: true, skip_empty_lines: true });
-    } catch {
-      throw new AppError(400, "Invalid CSV. Required columns: sku,qty.");
-    }
+    const raw = parseImportCsv(csv);
     if (raw.length > 10000) throw new AppError(400, "Maximum 10,000 rows.");
     const parts = (
       await pool.query(
@@ -26,6 +22,12 @@ export async function openingImportRoutes(app: FastifyInstance, pool: Pool) {
       errors: string[] = [],
       rows: any[] = [];
     raw.forEach((r, i) => {
+      try {
+        assertPesoCurrency(r);
+      } catch {
+        errors.push("Row " + (i + 2) + ": currency must be PHP.");
+        return;
+      }
       const p = map.get(r.sku),
         v = qty.safeParse(Number(r.qty));
       if (!p || !v.success || seen.has(r.sku) || p.opened) {

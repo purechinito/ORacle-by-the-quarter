@@ -15,6 +15,9 @@ export function createPosting(
     get pending() {
       return attempt !== null;
     },
+    get pendingAction(): Attempt | null {
+      return attempt ? JSON.parse(JSON.stringify(attempt)) : null;
+    },
     async submit(path: string, body: any) {
       if (!attempt) {
         const next = { path, body: JSON.parse(JSON.stringify(body)) };
