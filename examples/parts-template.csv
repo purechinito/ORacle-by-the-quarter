@@ -1,0 +1,3 @@
+sku,name,price,brand,category,bin,reorder,aliases
+SAMPLE-FILTER-001,Sample oil filter,125.00,Sample Brand,Filters,A-01,5,SAMPLE-BARCODE-001|SAMPLE-OEM-001
+SAMPLE-PAD-001,Sample brake pad set,850.00,Sample Brand,Brakes,B-02,3,SAMPLE-BARCODE-002

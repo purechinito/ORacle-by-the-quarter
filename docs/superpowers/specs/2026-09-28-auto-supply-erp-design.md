@@ -105,3 +105,7 @@ Backups run independently of the app; test restoration into a separate database 
 ## Decisions required before live operation
 Currency and jurisdiction; tax-inclusive versus exclusive pricing; actual sales/returns rules; fractional/pack-unit needs; number of locations and concurrent staff; approved hosting and backup retention; fitment/catalog data source.
 These remain explicit launch decisions, not silently invented settings.
+
+## Confirmed localization amendment — 28 September 2026
+
+The user explicitly selected Philippine pesos only and Philippine context. PHP and Asia/Manila supersede the earlier selectable currency/timezone assumption. Currency enforcement covers settings, posted sales and restored data; no automatic conversion or relabelling of incompatible historical amounts. VAT treatment remains a separate explicit shop decision.
