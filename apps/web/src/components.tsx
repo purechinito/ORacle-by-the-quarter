@@ -1,3 +1,4 @@
+import { pesos } from "./locale";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "./api";
 export type Part = {
@@ -249,7 +250,7 @@ export function PartPicker({
               </small>
             </span>
             <span>
-              {p.price}
+              {pesos(p.price)}
               <small>{p.stock} in stock</small>
             </span>
           </button>

@@ -2,7 +2,7 @@
 
 Before real use, complete the blocked browser checks and resolve relevant limitations in COVERAGE.md.
 
-- Confirm shop currency, business timezone, inclusive/exclusive/no-tax treatment, tax rate and local receipt requirements.
+- Verify PHP formatting and Philippine midnight boundaries. Confirm inclusive/exclusive/no-VAT treatment, VAT rate and local receipt requirements.
 - Verify fitment data ownership and accuracy. Never assume an OEM alias proves compatibility.
 - Import representative parts including similar part numbers, multiple barcodes, inactive SKUs and missing optional fields.
 - Receive a purchase order in two deliveries. Reconcile stock and reject an extra receipt.

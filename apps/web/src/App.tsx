@@ -1,3 +1,4 @@
+import { pesos, phDate, phDateTime } from "./locale";
 import { useEffect, useState } from "react";
 import { api, setCsrf } from "./api";
 import { Field, Notice, useData } from "./components";
@@ -172,12 +173,7 @@ export default function App() {
           </span>
           <span>
             <i className="status-dot" /> Connected{" "}
-            <span className="divider">|</span>{" "}
-            {new Date().toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
+            <span className="divider">|</span> {phDate()}
           </span>
         </div>
         <div className="page">
@@ -243,17 +239,17 @@ function Overview({ navigate }: { navigate: (p: string) => void }) {
             {[
               [
                 "Active catalog",
-                d.parts.toLocaleString(),
+                d.parts.toLocaleString("en-PH"),
                 "parts in your catalog",
               ],
               [
                 "Stock on hand",
-                d.units.toLocaleString(),
+                d.units.toLocaleString("en-PH"),
                 "units across the shop",
               ],
               [
                 "Recorded sales",
-                `${d.currency} ${d.salesTotal}`,
+                pesos(d.salesTotal),
                 `${d.salesCount} posted sales · all time`,
               ],
               ["Needs restocking", d.low, "parts at or below reorder point"],
@@ -356,10 +352,8 @@ function Overview({ navigate }: { navigate: (p: string) => void }) {
                   {d.recent.map((s: any) => (
                     <tr key={s.id}>
                       <td className="mono">{s.id.slice(0, 8).toUpperCase()}</td>
-                      <td>{new Date(s.posted_at).toLocaleString()}</td>
-                      <td>
-                        {d.currency} {s.total}
-                      </td>
+                      <td>{phDateTime(s.posted_at)}</td>
+                      <td>{pesos(s.total)}</td>
                       <td>
                         <span className="badge">Posted</span>
                       </td>

@@ -1,3 +1,4 @@
+import { pesos, phDateTime } from "../locale";
 import { usePosting } from "../usePosting";
 import { Receipt } from "./Counter";
 import { ImportDialog } from "./Catalog";
@@ -69,7 +70,7 @@ export function Stock({ role }: { role: string }) {
               {data?.map((m: any) => (
                 <tr key={m.id}>
                   <td>
-                    {new Date(m.created_at).toLocaleString()}
+                    {phDateTime(m.created_at)}
                     <small>{m.username}</small>
                   </td>
                   <td>
@@ -248,40 +249,37 @@ export function Settings() {
                 />
               </Field>
               <div className="form-grid">
-                <Field label="Currency (two decimal places)">
-                  <input
-                    name="currency"
-                    required
-                    pattern="[A-Z]{3}"
-                    placeholder="e.g. USD"
-                    defaultValue={data.currency ?? ""}
-                  />
+                <Field label="Currency — Philippine peso (₱)">
+                  <input name="currency" value="PHP" readOnly />
                 </Field>
-                <Field label="Business timezone">
-                  <input
-                    name="timezone"
-                    required
-                    placeholder="e.g. Asia/Manila"
-                    defaultValue={data.timezone ?? ""}
-                  />
+                <Field label="Philippine time (UTC+08:00)">
+                  <input name="timezone" value="Asia/Manila" readOnly />
                 </Field>
               </div>
               <div className="form-grid">
-                <Field label="Tax treatment">
-                  <select name="taxMode" defaultValue={data.taxMode ?? "none"}>
-                    <option value="none">No tax</option>
-                    <option value="inclusive">Price includes tax</option>
-                    <option value="exclusive">Tax added to price</option>
+                <Field label="VAT treatment">
+                  <select
+                    name="taxMode"
+                    required
+                    defaultValue={data.taxMode ?? ""}
+                  >
+                    <option value="" disabled>
+                      Choose your registered tax treatment
+                    </option>
+                    <option value="none">No VAT charged on these sales</option>
+                    <option value="inclusive">Prices include VAT</option>
+                    <option value="exclusive">VAT added to prices</option>
                   </select>
                 </Field>
-                <Field label="Tax rate (%)">
+                <Field label="Confirmed VAT rate (%)">
                   <input
                     name="taxRate"
                     min="0"
                     max="100"
                     step=".01"
                     type="number"
-                    defaultValue={data.taxRate ?? "0"}
+                    required
+                    defaultValue={data.taxRate ?? ""}
                   />
                 </Field>
               </div>
@@ -289,7 +287,8 @@ export function Settings() {
                 Save configuration
               </button>
               <p className="hint">
-                Confirm local receipt and tax requirements before live trading.
+                Use the VAT treatment confirmed for your business. Currency and
+                local time are fixed for the Philippines.
               </p>
             </form>
           )}
@@ -392,7 +391,7 @@ export function Reports({ role }: { role: string }) {
         </Field>
         {role === "manager" && (
           <a className="button" href="/api/reports/export">
-            Export current stock CSV ↓
+            Export stock (PHP) CSV ↓
           </a>
         )}
       </div>
@@ -414,8 +413,8 @@ export function Reports({ role }: { role: string }) {
           </p>
           <div className="stat-grid">
             {[
-              ["Sales recorded", d.salesTotal],
-              ["Payments recorded", d.paymentTotal],
+              ["Sales recorded", pesos(d.salesTotal)],
+              ["Payments recorded", pesos(d.paymentTotal)],
               ["Posted sales", d.salesCount],
               ["Return records", d.returns],
             ].map(([label, value]) => (
@@ -459,10 +458,8 @@ export function Reports({ role }: { role: string }) {
                         short(s.id)
                       )}
                     </td>
-                    <td>{new Date(s.posted_at).toLocaleString()}</td>
-                    <td>
-                      {d.currency} {s.total}
-                    </td>
+                    <td>{phDateTime(s.posted_at)}</td>
+                    <td>{pesos(s.total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -508,7 +505,7 @@ export function Audit() {
             <tbody>
               {data?.map((a: any) => (
                 <tr key={a.id}>
-                  <td>{new Date(a.created_at).toLocaleString()}</td>
+                  <td>{phDateTime(a.created_at)}</td>
                   <td>{a.username}</td>
                   <td>{a.action}</td>
                   <td className="mono">{a.record_id}</td>

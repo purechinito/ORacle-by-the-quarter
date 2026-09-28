@@ -1,3 +1,4 @@
+import { pesos } from "../locale";
 import { usePosting, hasPendingPosting } from "../usePosting";
 import { useState } from "react";
 import { api } from "../api";
@@ -179,7 +180,7 @@ export function Purchasing({ role }: { role: string }) {
                   </td>
                   <td>{l.qty}</td>
                   <td>{l.received}</td>
-                  {role === "manager" && <td>{l.cost}</td>}
+                  {role === "manager" && <td>{pesos(l.cost)}</td>}
                 </tr>
               ))}
             </tbody>
@@ -316,7 +317,7 @@ function NewOrder({
                   }
                 />
               </Field>
-              <Field label="Unit cost">
+              <Field label="Unit cost (₱)">
                 <input
                   type="number"
                   min="0"

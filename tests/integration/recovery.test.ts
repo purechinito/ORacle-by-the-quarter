@@ -25,10 +25,10 @@ test("backup restores documents and stock into an empty database and rejects ove
   });
   await t.request(m, "POST", "/api/settings", {
     shopName: "Restore shop",
-    currency: "USD",
+    currency: "PHP",
     taxMode: "none",
     taxRate: "0",
-    timezone: "UTC",
+    timezone: "Asia/Manila",
   });
   const sale = await t.request(m, "POST", "/api/carts", {
     lines: [{ partId: p.json().id, qty: 3 }],

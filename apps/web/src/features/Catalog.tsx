@@ -1,3 +1,4 @@
+import { pesos } from "../locale";
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import {
@@ -103,7 +104,7 @@ export function Catalog({ role }: { role: string }) {
           <h2>
             Parts catalog <span className="count">{data?.total ?? "…"}</span>
           </h2>
-          <span className="muted">Prices in configured shop currency</span>
+          <span className="muted">All prices in Philippine pesos (PHP)</span>
         </div>
         <div className="table-scroll">
           <table>
@@ -134,7 +135,7 @@ export function Catalog({ role }: { role: string }) {
                   <td>
                     <b>{p.stock}</b>
                   </td>
-                  <td>{p.price}</td>
+                  <td>{pesos(p.price)}</td>
                   <td>
                     <span
                       className={
@@ -292,7 +293,7 @@ function PartEditor({
               ["name", "Part name"],
               ["brand", "Brand"],
               ["category", "Category"],
-              ["price", "Selling price"],
+              ["price", "Selling price (₱)"],
               ["bin", "Shelf / bin"],
               ["reorder", "Reorder point"],
             ].map(([key, label]) => (
@@ -346,7 +347,7 @@ function PartEditor({
                 <span>
                   <b>{p.name}</b>
                   <small>
-                    {p.sku} · {p.stock} on hand · {p.price}
+                    {p.sku} · {p.stock} on hand · {pesos(p.price)}
                   </small>
                 </span>
                 {!readonly && (
@@ -431,7 +432,7 @@ export function ImportDialog({
       <p>
         {stock
           ? "Required columns: sku,qty. Preview opening quantities before posting. Each part may receive opening stock only once."
-          : "Required columns: sku,name,price. Optional: brand, category, bin, reorder, aliases. Catalog records only; stock is separate."}
+          : "Required columns: sku,name,price. Optional: brand, category, bin, reorder, aliases. Prices must be in PHP using plain numbers (e.g. 1250.50). Catalog records only; stock is separate."}
       </p>
       <fieldset disabled={busy}>
         <Field label="Choose a CSV file">

@@ -57,7 +57,7 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
     checkDates(q);
     return (
       await pool.query(
-        "SELECT s.*,c.name AS customer FROM sales s LEFT JOIN customers c ON c.id=s.customer_id WHERE ($1='manager' OR s.actor=$2) AND ($3='' OR s.status=$3) AND ($4='' OR position(lower($4) in lower(s.id::text||' '||COALESCE(c.name,'Walk-in')||' '||s.lines::text))>0) AND ($5::date IS NULL OR COALESCE(s.posted_at,s.created_at)>=($5::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) AND ($6::date IS NULL OR COALESCE(s.posted_at,s.created_at)<(($6::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) ORDER BY COALESCE(s.posted_at,s.created_at) DESC,s.id DESC LIMIT $7 OFFSET $8",
+        "SELECT s.*,c.name AS customer FROM sales s LEFT JOIN customers c ON c.id=s.customer_id WHERE ($1='manager' OR s.actor=$2) AND ($3='' OR s.status=$3) AND ($4='' OR position(lower($4) in lower(s.id::text||' '||COALESCE(c.name,'Walk-in')||' '||s.lines::text))>0) AND ($5::date IS NULL OR COALESCE(s.posted_at,s.created_at)>=($5::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'Asia/Manila'))) AND ($6::date IS NULL OR COALESCE(s.posted_at,s.created_at)<(($6::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'Asia/Manila'))) ORDER BY COALESCE(s.posted_at,s.created_at) DESC,s.id DESC LIMIT $7 OFFSET $8",
         [
           req.actor.role,
           req.actor.id,
@@ -203,10 +203,14 @@ export async function salesRoutes(app: FastifyInstance, pool: Pool) {
         const settings = (
           await tx.query("SELECT data FROM settings WHERE id=1 FOR SHARE")
         ).rows[0].data;
-        if (!settings.currency || !settings.taxMode)
+        if (
+          settings.currency !== "PHP" ||
+          settings.timezone !== "Asia/Manila" ||
+          !settings.taxMode
+        )
           throw new AppError(
             409,
-            "Configure currency and tax treatment before posting.",
+            "Confirm Philippine shop tax treatment before posting.",
           );
         const amount = totals(sale.lines, settings);
         if (new Decimal(b.payment).lt(amount.total))

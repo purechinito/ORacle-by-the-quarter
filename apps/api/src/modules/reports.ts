@@ -21,32 +21,10 @@ export async function reportsRoutes(app: FastifyInstance, pool: Pool) {
     const b = z
       .object({
         shopName: text,
-        currency: z
-          .string()
-          .regex(/^[A-Z]{3}$/)
-          .refine((c) => {
-            try {
-              return (
-                new Intl.NumberFormat("en", {
-                  style: "currency",
-                  currency: c,
-                }).resolvedOptions().maximumFractionDigits === 2 &&
-                Intl.supportedValuesOf("currency").includes(c)
-              );
-            } catch {
-              return false;
-            }
-          }, "Choose a supported currency with two decimal places."),
+        currency: z.literal("PHP").default("PHP"),
         taxMode: z.enum(["none", "inclusive", "exclusive"]),
         taxRate: money.refine((x) => Number(x) <= 100),
-        timezone: z.string().refine((t) => {
-          try {
-            new Intl.DateTimeFormat("en", { timeZone: t });
-            return true;
-          } catch {
-            return false;
-          }
-        }, "Invalid timezone"),
+        timezone: z.literal("Asia/Manila").default("Asia/Manila"),
       })
       .parse(req.body);
     return transaction(pool, async (tx) => {
@@ -75,7 +53,11 @@ export async function reportsRoutes(app: FastifyInstance, pool: Pool) {
     checkDates(q);
     const settings = (await pool.query("SELECT data FROM settings WHERE id=1"))
       .rows[0].data;
-    const args = [q.from ?? null, q.to ?? null, settings.timezone ?? "UTC"];
+    const args = [
+      q.from ?? null,
+      q.to ?? null,
+      settings.timezone ?? "Asia/Manila",
+    ];
     const where =
       "status='posted' AND ($1::date IS NULL OR posted_at >= ($1::date::timestamp AT TIME ZONE $3)) AND ($2::date IS NULL OR posted_at < (($2::date+1)::timestamp AT TIME ZONE $3))";
     const summary = (
@@ -136,8 +118,8 @@ export async function reportsRoutes(app: FastifyInstance, pool: Pool) {
       outstanding,
       returns: returned,
       recent,
-      currency: settings.currency ?? "",
-      timezone: settings.timezone ?? "UTC",
+      currency: settings.currency ?? "PHP",
+      timezone: settings.timezone ?? "Asia/Manila",
       location: "Main stockroom",
     };
   });
@@ -150,7 +132,7 @@ export async function reportsRoutes(app: FastifyInstance, pool: Pool) {
     ).rows;
     reply
       .type("text/csv")
-      .header("Content-Disposition", 'attachment; filename="stock.csv"');
+      .header("Content-Disposition", 'attachment; filename="stock-php.csv"');
     return [
       "sku,name,brand,category,stock,reorder,price,bin",
       ...rows.map((r) => Object.values(r).map(csvCell).join(",")),
@@ -162,7 +144,7 @@ export async function reportsRoutes(app: FastifyInstance, pool: Pool) {
     checkDates(q);
     return (
       await pool.query(
-        "SELECT a.*,u.username FROM audit_events a JOIN users u ON u.id=a.actor WHERE ($1='' OR position(lower($1) in lower(a.action||' '||a.record_id||' '||u.username))>0) AND ($2::date IS NULL OR a.created_at>=($2::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) AND ($3::date IS NULL OR a.created_at<(($3::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) ORDER BY a.id DESC LIMIT $4 OFFSET $5",
+        "SELECT a.*,u.username FROM audit_events a JOIN users u ON u.id=a.actor WHERE ($1='' OR position(lower($1) in lower(a.action||' '||a.record_id||' '||u.username))>0) AND ($2::date IS NULL OR a.created_at>=($2::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'Asia/Manila'))) AND ($3::date IS NULL OR a.created_at<(($3::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'Asia/Manila'))) ORDER BY a.id DESC LIMIT $4 OFFSET $5",
         [q.q, q.from ?? null, q.to ?? null, q.limit, (q.page - 1) * q.limit],
       )
     ).rows;

@@ -30,3 +30,8 @@ The reviewer declined to judge visual/browser usability, production readiness an
 32 tests pass across eight files using temporary PostgreSQL databases. New failing-then-passing cases cover purchase draft edits and cancellation reasons, persistent cash tender/change, audited refund confirmation without repeated stock movement, checkout retry after navigation and session expiry, history beyond 100 records with role scoping, substitute validation, discontinued-part returns/corrections, and posted-date history. Type checking, production build and whitespace checks pass.
 
 Import inputs are frozen during validation so the displayed CSV cannot diverge from the accepted preview. Receipt recovery is visible even after the order reaches received status. Browser/UI assertions have not been substituted for real browser testing.
+
+## Philippine localization
+
+User confirmed PHP-only Philippine operation. Five additional integration scenarios verify fixed locale defaults without choosing a tax treatment, rejection of other currencies/timezones before trading, database protection for settings and posted snapshots, Manila midnight boundaries in reports and four histories, and refusal to relabel a legacy non-PHP database. The full suite passes 37 checks; type checking and production build pass. Frontend formatters apply en-PH, PHP and Asia/Manila across the identified monetary/date surfaces. Browser verification remains pending.
+The independent localization source review found no important correctness issues. Its formatter smoke checks covered Manila midnight and large peso values. The export keeps its import-compatible price header and identifies PHP in its file name and download label.

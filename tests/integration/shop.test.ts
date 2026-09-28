@@ -210,10 +210,10 @@ test("sales require settings and exact payment and preserve stock on failure", a
     (
       await post("/api/settings", {
         shopName: "Example Auto",
-        currency: "USD",
+        currency: "PHP",
         taxMode: "none",
         taxRate: "0",
-        timezone: "UTC",
+        timezone: "Asia/Manila",
       })
     ).statusCode,
   ).toBe(200);
@@ -308,13 +308,13 @@ test("reports reconcile and cost fields do not leak", async () => {
 test("currency cannot be changed after a posted sale", async () => {
   const r = await post("/api/settings", {
     shopName: "Example Auto",
-    currency: "PHP",
+    currency: "USD",
     taxMode: "none",
     taxRate: "0",
-    timezone: "UTC",
+    timezone: "Asia/Manila",
   });
-  expect(r.statusCode).toBe(409);
+  expect(r.statusCode).toBe(400);
   expect((await t.request(m, "GET", "/api/settings")).json().currency).toBe(
-    "USD",
+    "PHP",
   );
 });

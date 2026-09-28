@@ -114,10 +114,10 @@ test("a lost partial return response recovers once after reopen", async () => {
   });
   await post("/api/settings", {
     shopName: "Test",
-    currency: "USD",
+    currency: "PHP",
     taxMode: "none",
     taxRate: "0",
-    timezone: "UTC",
+    timezone: "Asia/Manila",
   });
   const sale = await post("/api/carts", {
     lines: [{ partId: p.json().id, qty: 4 }],

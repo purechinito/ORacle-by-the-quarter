@@ -1,3 +1,4 @@
+import { pesos, phDateTime } from "../locale";
 import { sessionStore, useSessionState } from "../session";
 import { usePosting } from "../usePosting";
 import { addPartToCart, invalidateCartTotals } from "../cart";
@@ -166,7 +167,7 @@ export function Counter({
                   <div>
                     <b>{l.name}</b>
                     <small>
-                      {l.sku} · {l.override ?? l.price} each
+                      {l.sku} · {pesos(l.override ?? l.price)} each
                     </small>
                   </div>
                   {role === "manager" && (
@@ -238,16 +239,13 @@ export function Counter({
           {cart?.total != null && (
             <div className="totals">
               <span>
-                Subtotal <b>{cart.subtotal}</b>
+                Subtotal <b>{pesos(cart.subtotal)}</b>
               </span>
               <span>
-                Tax <b>{cart.tax}</b>
+                VAT <b>{pesos(cart.tax)}</b>
               </span>
               <strong>
-                Total{" "}
-                <b>
-                  {settings?.currency} {cart.total}
-                </b>
+                Total <b>{pesos(cart.total)}</b>
               </strong>
             </div>
           )}
@@ -301,7 +299,7 @@ export function Counter({
             }}
           >
             <div className="form-grid">
-              <Field label="Payment received">
+              <Field label="Payment received (₱)">
                 <input
                   disabled={busy || checkout.current.pending}
                   required
@@ -368,7 +366,7 @@ export function Counter({
               <tr key={s.id}>
                 <td className="mono">{short(s.id)}</td>
                 <td>{s.customer || "Walk-in"}</td>
-                <td>{s.total ?? "—"}</td>
+                <td>{pesos(s.total)}</td>
                 <td>
                   <span
                     className={"badge " + (s.status === "draft" ? "warn" : "")}
@@ -449,7 +447,7 @@ export function Receipt({
       <div className="receipt">
         <p className="eyebrow">{sale.settings?.shopName}</p>
         <h2>{short(sale.id)}</h2>
-        <p>{new Date(sale.posted_at).toLocaleString()} · Operational receipt</p>
+        <p>{phDateTime(sale.posted_at)} · Sales summary</p>
         <table>
           <thead>
             <tr>
@@ -466,23 +464,20 @@ export function Receipt({
                   <small>{l.sku}</small>
                 </td>
                 <td>{l.qty}</td>
-                <td>{l.price}</td>
+                <td>{pesos(l.price)}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <div className="totals">
           <span>
-            Subtotal <b>{sale.subtotal}</b>
+            Subtotal <b>{pesos(sale.subtotal)}</b>
           </span>
           <span>
-            Tax <b>{sale.tax}</b>
+            VAT <b>{pesos(sale.tax)}</b>
           </span>
           <strong>
-            Total{" "}
-            <b>
-              {sale.settings?.currency} {sale.total}
-            </b>
+            Total <b>{pesos(sale.total)}</b>
           </strong>
           {sale.payment && (
             <>
@@ -495,10 +490,20 @@ export function Receipt({
                 </b>
               </span>
               <span>
-                Tendered <b>{sale.payment.tendered ?? "Not recorded"}</b>
+                Tendered{" "}
+                <b>
+                  {sale.payment.tendered == null
+                    ? "Not recorded"
+                    : pesos(sale.payment.tendered)}
+                </b>
               </span>
               <strong>
-                Change due <b>{sale.payment.change ?? "Not recorded"}</b>
+                Change due{" "}
+                <b>
+                  {sale.payment.change == null
+                    ? "Not recorded"
+                    : pesos(sale.payment.change)}
+                </b>
               </strong>
             </>
           )}

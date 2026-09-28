@@ -3,7 +3,7 @@
 This is a local pilot using synthetic parts. Browser verification and shop setup are still required before real trading.
 
 1. Open the local preview at http://127.0.0.1:5173 and sign in with your private generated owner login.
-2. In **Settings**, enter the shop name, currency, timezone and confirmed tax treatment/rate. Add individual accounts for counter staff and stock clerks.
+2. In **Settings**, enter the shop name and confirmed VAT treatment/rate. Currency is fixed to PHP (₱) and dates use Philippine time. Add individual accounts for counter staff and stock clerks.
 3. In **Parts**, search a SKU or barcode. Open a part to maintain its price, bin, aliases, vehicle fitment and verified alternatives. CSV import validates the catalog before saving it.
 4. In **Stock movements**, import opening stock separately after a physical count. Each part's opening quantity can be recorded once. Later corrections require a manager's reason.
 5. In **Purchasing**, choose/add a supplier, add parts and save a draft. Edit mistakes before submitting. Use Receive stock for each delivery; enter only quantities physically received. View order shows quantities and any cancellation reason.
@@ -17,4 +17,4 @@ Keep the same tab open. If a result is uncertain, use its Retry/Recover action. 
 
 ## Before using your real stock
 
-Use a fresh database without demo records. Confirm currency, tax treatment, number of stock locations, receipt wording and staff roles. Import approved catalog and opening stock, reconcile a sample against shelves, verify scanner and printer behavior, test a complete sale/return, and restore a backup into a separate database. The provided reports are operational totals, not an accounting ledger.
+Use a fresh database without demo records. Confirm VAT treatment, number of stock locations, receipt wording and staff roles. All monetary amounts must be in pesos; the application performs no currency conversion. Import approved catalog and opening stock, reconcile a sample against shelves, verify scanner and printer behavior, test a complete sale/return, and restore a backup into a separate database. The provided reports are operational totals, not an accounting ledger.

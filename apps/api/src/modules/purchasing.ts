@@ -43,7 +43,7 @@ export async function purchasingRoutes(app: FastifyInstance, pool: Pool) {
     checkDates(q);
     const orders = (
       await pool.query(
-        "SELECT p.*,s.name AS supplier FROM purchases p JOIN suppliers s ON s.id=p.supplier_id WHERE ($1='' OR p.status=$1) AND ($2='' OR position(lower($2) in lower(p.id::text||' '||s.name||' '||COALESCE((SELECT string_agg(a.sku||' '||a.name,' ') FROM purchase_lines pl JOIN parts a ON a.id=pl.part_id WHERE pl.purchase_id=p.id),'')))>0) AND ($3::date IS NULL OR p.created_at>=($3::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) AND ($4::date IS NULL OR p.created_at<(($4::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) ORDER BY p.created_at DESC,p.id DESC LIMIT $5 OFFSET $6",
+        "SELECT p.*,s.name AS supplier FROM purchases p JOIN suppliers s ON s.id=p.supplier_id WHERE ($1='' OR p.status=$1) AND ($2='' OR position(lower($2) in lower(p.id::text||' '||s.name||' '||COALESCE((SELECT string_agg(a.sku||' '||a.name,' ') FROM purchase_lines pl JOIN parts a ON a.id=pl.part_id WHERE pl.purchase_id=p.id),'')))>0) AND ($3::date IS NULL OR p.created_at>=($3::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'Asia/Manila'))) AND ($4::date IS NULL OR p.created_at<(($4::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'Asia/Manila'))) ORDER BY p.created_at DESC,p.id DESC LIMIT $5 OFFSET $6",
         [
           q.status,
           q.q,

@@ -50,7 +50,7 @@ export async function inventoryRoutes(app: FastifyInstance, pool: Pool) {
     checkDates(q);
     return (
       await pool.query(
-        "SELECT m.*,p.sku,p.name,u.username FROM movements m JOIN parts p ON p.id=m.part_id JOIN users u ON u.id=m.actor WHERE ($1::uuid IS NULL OR m.part_id=$1) AND ($2='' OR position(lower($2) in lower(p.sku||' '||p.name||' '||m.reason||' '||m.document_id))>0) AND ($3='' OR m.kind=$3) AND ($4::date IS NULL OR m.created_at>=($4::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) AND ($5::date IS NULL OR m.created_at<(($5::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'UTC'))) ORDER BY m.id DESC LIMIT $6 OFFSET $7",
+        "SELECT m.*,p.sku,p.name,u.username FROM movements m JOIN parts p ON p.id=m.part_id JOIN users u ON u.id=m.actor WHERE ($1::uuid IS NULL OR m.part_id=$1) AND ($2='' OR position(lower($2) in lower(p.sku||' '||p.name||' '||m.reason||' '||m.document_id))>0) AND ($3='' OR m.kind=$3) AND ($4::date IS NULL OR m.created_at>=($4::date::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'Asia/Manila'))) AND ($5::date IS NULL OR m.created_at<(($5::date+1)::timestamp AT TIME ZONE COALESCE((SELECT data->>'timezone' FROM settings WHERE id=1),'Asia/Manila'))) ORDER BY m.id DESC LIMIT $6 OFFSET $7",
         [
           q.partId ?? null,
           q.q,

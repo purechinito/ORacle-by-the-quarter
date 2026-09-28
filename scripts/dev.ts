@@ -59,7 +59,7 @@ const child = spawn(
 const vite = await createServer();
 await vite.listen();
 console.log(
-  "Quarter preview: http://127.0.0.1:5173 — local login is in .data/dev-credentials.json. Synthetic catalog only; configure shop settings before sales.",
+  "Quarter preview: http://127.0.0.1:5173 — local login is in .data/dev-credentials.json. Synthetic catalog only; PHP and Philippine time are fixed. Confirm VAT treatment before sales.",
 );
 let stopping = false;
 async function stop() {

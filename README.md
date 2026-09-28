@@ -1,6 +1,6 @@
-# Quarter — Auto Supply ERP
+# Quarter — Philippine Auto Supply ERP
 
-Original auto-parts shop software inspired by general ERP workflows. No Oracle code, assets, credentials or account data are included. This is an initial implementation for review and a supervised pilot, not a certified accounting or tax system.
+Original auto-parts shop software for the Philippines, using Philippine pesos (PHP) only and Asia/Manila business time. No Oracle code, assets, credentials or account data are included. This is an initial implementation for review and a supervised pilot, not a certified accounting or tax system.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ npm run dev
 
 Open http://127.0.0.1:5173. The first run creates a local PostgreSQL database and a random manager login in `.data/dev-credentials.json` (owner username). That file and the database are ignored by Git. Never publish them. The password is not a shared default. Development binds to loopback.
 
-The preview starts with **60 synthetic demo parts** and explicitly labeled opening stock. It does not configure a real currency or tax treatment. Set these under Settings before testing sales. Do not use the demo database for real trading.
+The preview starts with **60 synthetic demo parts** and explicitly labeled opening stock. PHP and Philippine time are fixed. VAT treatment and rate must be confirmed under Settings before testing sales. Do not use the demo database for real trading.
 
 ## What works
 
@@ -25,7 +25,7 @@ The preview starts with **60 synthetic demo parts** and explicitly labeled openi
 - Shop settings, operational totals, stock export, searchable activity log, paginated history and safe retry protection for postings. Carts and uncertain attempts survive navigation and reload in the same tab.
 - Backup snapshots and restore into an empty database, with stock reconciliation.
 
-Start with [the shop walkthrough](docs/SHOP-WALKTHROUGH.md) and the sample [catalog CSV](examples/parts-template.csv) and [opening stock CSV](examples/opening-stock-template.csv). Replace the sample rows with approved business data.
+See [Philippine setup](docs/PHILIPPINES.md). Start with [the shop walkthrough](docs/SHOP-WALKTHROUGH.md) and the sample [catalog CSV](examples/parts-template.csv) and [opening stock CSV](examples/opening-stock-template.csv). Replace the sample rows with approved business data.
 
 See [coverage and limitations](docs/COVERAGE.md), [runbook](docs/RUNBOOK.md), [pilot checklist](docs/PILOT.md), the [approved design](docs/superpowers/specs/2026-09-28-auto-supply-erp-design.md) and [implementation plan](docs/superpowers/plans/2026-09-28-auto-supply-erp.md).
 
@@ -39,7 +39,7 @@ npm run build
 
 Tests start isolated PostgreSQL clusters and cover real API/database behavior, 5,000 synthetic parts, stock races, duplicate submissions and restore. They require permission to start local processes and allocate PostgreSQL shared memory.
 
-The 32 automated checks pass locally; type checking and production build also pass. An independent source review found no remaining important issues in the revised pilot workflows.
+The 37 automated checks pass locally; type checking and production build also pass. An independent source review found no remaining important issues in the revised pilot workflows.
 
 Browser tests are provided but were not executed in the authoring environment because a saved browser permission blocked local preview access. To run them yourself with the local preview running, set `ERP_TEST_USERNAME` and `ERP_TEST_PASSWORD`, then run `npm run test:e2e` after installing the Playwright Chromium browser. Use a disposable demo database.
 

@@ -64,10 +64,10 @@ test("cash tender and change survive receipt reopening; refund completion does n
   });
   await post("/settings", {
     shopName: "Pilot",
-    currency: "USD",
+    currency: "PHP",
     taxMode: "none",
     taxRate: "0",
-    timezone: "UTC",
+    timezone: "Asia/Manila",
   });
   const sale = (
     await post("/carts", { lines: [{ partId: part.id, qty: 2 }] })
@@ -275,7 +275,7 @@ test("posted-sales date filters follow completion date rather than old draft cre
   ).rows[0].id;
   const sale = (
     await t.pool.query(
-      "INSERT INTO sales(actor,status,lines,total,created_at,posted_at) VALUES($1,'posted','[]',1,'2026-01-01T12:00:00Z','2026-01-03T12:00:00Z') RETURNING id",
+      "INSERT INTO sales(actor,status,lines,total,settings,created_at,posted_at) VALUES($1,'posted','[]',1,'{\"currency\":\"PHP\"}','2026-01-01T12:00:00Z','2026-01-03T12:00:00Z') RETURNING id",
       [actor],
     )
   ).rows[0];

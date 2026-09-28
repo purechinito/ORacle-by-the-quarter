@@ -69,10 +69,10 @@ test("CSV neutralizes formulas and money totals use line rounding", async () => 
   });
   await post("/api/settings", {
     shopName: "Test",
-    currency: "USD",
+    currency: "PHP",
     taxMode: "exclusive",
     taxRate: "5.00",
-    timezone: "UTC",
+    timezone: "Asia/Manila",
   });
   const cart = await post("/api/carts", {
     lines: [{ partId: part.json().id, qty: 3 }],
