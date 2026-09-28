@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1000" viewBox="0 0 1500 1000" fill="#24343B" role="img" aria-labelledby="title desc">
+  <title id="title">ERP workspace — static design proposal</title>
+  <desc id="desc">An illustrative desktop ERP workspace with eight navigation destinations, command search, role and subsidiary controls, six sample work items, and a context panel for captured sales order SO353. Its total is USD 1,807.50. Related fulfillment IF364 is shipped, invoice INV336 is paid in full, and payment PYMT437 is deposited. This is not a running application.</desc>
+  <defs>
+    <style>
+      text { font-family: 'Avenir Next', 'Trebuchet MS', sans-serif; }
+      .small { font-size: 14px; }
+      .body { font-size: 16px; }
+      .medium { font-size: 17px; font-weight: 600; }
+      .label { font-size: 12px; font-weight: 700; letter-spacing: 1.3px; }
+      .muted { fill: #586971; }
+      .teal { fill: #11685F; }
+      .light { fill: #F7F8F3; }
+      .navmuted { fill: #B9CACD; }
+      .number { font-variant-numeric: tabular-nums; }
+      .display { font-family: Georgia, serif; }
+      .icon { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+    <g id="today" class="icon"><rect x="2" y="3" width="16" height="16" rx="3"/><path d="M2 8h16M6 1v4M14 1v4M6 12h3M6 15h6"/></g>
+    <g id="sales" class="icon"><path d="M3 4h14v13H3zM6 1v6M14 1v6M7 11l2 2 4-4"/></g>
+    <g id="purchase" class="icon"><path d="M1 3h3l2 11h10l3-8H5M8 18h.01M15 18h.01"/><circle cx="8" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></g>
+    <g id="inventory" class="icon"><path d="M2 5l8-4 8 4v10l-8 4-8-4zM2 5l8 4 8-4M10 9v10M6 3l8 4"/></g>
+    <g id="finance" class="icon"><rect x="2" y="2" width="16" height="16" rx="2"/><path d="M2 7h16M7 7v11M11 11h3M11 14h3"/></g>
+    <g id="reports" class="icon"><path d="M2 2v16h17M6 14V9M11 14V5M16 14V2"/></g>
+    <g id="people" class="icon"><circle cx="8" cy="6" r="3"/><path d="M2 18v-2a6 6 0 0 1 12 0v2M14 3a3 3 0 0 1 0 6M16 12a5 5 0 0 1 3 5"/></g>
+    <g id="admin" class="icon"><path d="M10 1l7 3v6c0 4-4 7-7 9-3-2-7-5-7-9V4zM7 10l2 2 4-4"/></g>
+    <g id="chevron" class="icon"><path d="M1 1l4 4 4-4"/></g>
+    <g id="arrow" class="icon"><path d="M1 5h10M7 1l4 4-4 4"/></g>
+    <g id="check"><circle cx="0" cy="0" r="10" fill="#E2F0EA"/><path d="M-4 0l3 3 5-6" fill="none" stroke="#11685F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+  </defs>
+
+  <!-- This full-width label is intentionally part of the artifact. -->
+  <rect width="1500" height="1000" fill="#F3F2EC"/>
+  <rect width="1500" height="34" fill="#E4ECE7"/>
+  <text x="750" y="22" text-anchor="middle" font-size="14" font-weight="600" fill="#294F47">Design proposal · illustrative workspace · not a running application</text>
+
+  <!-- Navigation: stable destinations, not a set of dashboard cards. -->
+  <rect x="0" y="34" width="216" height="966" fill="#24383E"/>
+  <path d="M26 68h20M26 74h14M26 80h20" stroke="#8BBEB0" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="59" y="80" font-size="17" font-weight="700" letter-spacing="1.7" class="light">WORKSPACE</text>
+  <text x="27" y="115" class="small navmuted">Operations, in one place.</text>
+  <text x="27" y="157" class="label navmuted">WORK AREAS</text>
+  <rect x="14" y="175" width="188" height="46" rx="7" fill="#DDEEE5"/>
+  <use href="#today" x="28" y="188" color="#17675F"/>
+  <text x="62" y="204" class="body" font-weight="700" fill="#174E48">Today</text>
+  <rect x="165" y="186" width="23" height="24" rx="6" fill="#17675F"/>
+  <text x="176.5" y="203" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">6</text>
+  <use href="#sales" x="28" y="240" color="#CBD7D8"/><text x="62" y="256" class="body light">Sales</text>
+  <use href="#purchase" x="28" y="292" color="#CBD7D8"/><text x="62" y="308" class="body light">Purchasing</text>
+  <use href="#inventory" x="28" y="344" color="#CBD7D8"/><text x="62" y="360" class="body light">Inventory</text>
+  <use href="#finance" x="28" y="396" color="#CBD7D8"/><text x="62" y="412" class="body light">Finance</text>
+  <use href="#reports" x="28" y="448" color="#CBD7D8"/><text x="62" y="464" class="body light">Reports</text>
+  <use href="#people" x="28" y="500" color="#CBD7D8"/><text x="62" y="516" class="body light">People</text>
+  <use href="#admin" x="28" y="552" color="#CBD7D8"/><text x="62" y="568" class="body light">Administration</text>
+  <path d="M27 610h162" stroke="#506268"/>
+  <text x="27" y="647" class="label navmuted">PINNED VIEWS</text>
+  <text x="27" y="682" class="small light">Waiting for approval</text>
+  <text x="27" y="718" class="small light">Stock exceptions</text>
+  <text x="27" y="754" class="small light">Recently viewed</text>
+  <path d="M27 875h162" stroke="#506268"/>
+  <rect x="27" y="899" width="38" height="38" rx="10" fill="#40565C"/>
+  <text x="46" y="924" text-anchor="middle" class="small light" font-weight="700">OP</text>
+  <text x="78" y="915" class="small light" font-weight="600">Operations</text>
+  <text x="78" y="937" class="small navmuted">Personal workspace</text>
+  <text x="27" y="974" class="small navmuted">?  Keyboard shortcuts</text>
+
+  <!-- Command bar. Role and subsidiary remain visible. -->
+  <rect x="216" y="34" width="1284" height="88" fill="#FBFCF9"/>
+  <path d="M216 121.5h1284" stroke="#D8DEDA"/>
+  <rect x="248" y="54" width="529" height="46" rx="8" fill="#EFF2ED" stroke="#D5DED7"/>
+  <circle cx="270" cy="76" r="6" fill="none" stroke="#586971" stroke-width="1.6"/><path d="M274.5 80.5l5 5" stroke="#586971" stroke-width="1.6"/>
+  <text x="292" y="83" class="body muted">Find a record, action, or report</text>
+  <rect x="724" y="65" width="37" height="24" rx="4" fill="#FFFFFF" stroke="#CDD6CF"/>
+  <text x="742.5" y="82" font-size="13" text-anchor="middle" class="muted">⌘ K</text>
+  <text x="812" y="66" class="label muted">ROLE</text>
+  <text x="812" y="91" class="body" font-weight="600">Administrator</text>
+  <use href="#chevron" x="969" y="80" color="#586971"/>
+  <path d="M1011 55v45" stroke="#D8DEDA"/>
+  <text x="1043" y="66" class="label muted">SUBSIDIARY</text>
+  <text x="1043" y="91" class="body" font-weight="600">Subsidiary 1</text>
+  <use href="#chevron" x="1172" y="80" color="#586971"/>
+  <rect x="1227" y="57" width="126" height="39" rx="6" fill="#FBFCF9" stroke="#B8C7BF"/>
+  <text x="1290" y="82" text-anchor="middle" class="small" font-weight="600">+ New record</text>
+  <circle cx="1400" cy="77" r="19" fill="#E6ECE6"/>
+  <text x="1400" y="83" text-anchor="middle" class="small" font-weight="700">OP</text>
+  <use href="#chevron" x="1440" y="74" color="#586971"/>
+
+  <!-- Primary work area. -->
+  <text x="248" y="161" class="label muted">MONDAY, 28 SEPTEMBER</text>
+  <text x="248" y="207" class="display" font-size="38" font-weight="700" letter-spacing="-1">Today</text>
+  <text x="248" y="237" class="body muted">A clear queue. The context to keep work moving.</text>
+  <rect x="923" y="180" width="164" height="31" rx="15.5" fill="#E6EBE3"/>
+  <text x="1005" y="200" text-anchor="middle" class="small" font-weight="600">6 illustrative tasks</text>
+
+  <text x="249" y="285" class="body teal" font-weight="700">My work</text>
+  <text x="329" y="285" class="small teal">6</text>
+  <text x="383" y="285" class="body muted">Team queue</text>
+  <text x="529" y="285" class="body muted">Completed</text>
+  <text x="1087" y="285" text-anchor="end" class="small teal" font-weight="600">Manage views</text>
+  <path d="M248 303h840" stroke="#D3DBD4"/>
+  <path d="M248 302h100" stroke="#17675F" stroke-width="3"/>
+  <rect x="248" y="321" width="155" height="32" rx="6" fill="#FFFFFF" stroke="#CBD5CC"/>
+  <text x="262" y="342" class="small">Assigned to me</text><text x="383" y="342" class="small muted">×</text>
+  <rect x="415" y="321" width="127" height="32" rx="6" fill="#FFFFFF" stroke="#CBD5CC"/>
+  <text x="429" y="342" class="small">All modules</text><use href="#chevron" x="520" y="333" color="#586971"/>
+  <text x="1087" y="342" text-anchor="end" class="small muted">Illustrative queue order</text>
+
+  <rect x="248" y="374" width="840" height="529" rx="8" fill="#FBFCF9" stroke="#D6DED5"/>
+  <path d="M248 417h840" stroke="#D6DED5"/>
+  <text x="270" y="401" class="label muted">TASK / RECORD</text>
+  <text x="650" y="401" class="label muted">STATUS</text>
+  <text x="863" y="401" class="label muted">NEXT ACTION</text>
+
+  <!-- Selected item: proposed review task, captured record identity. -->
+  <rect x="249" y="418" width="838" height="80" fill="#E7F0E8"/>
+  <path d="M250 418v80" stroke="#17675F" stroke-width="4"/>
+  <text x="270" y="448" class="medium">Review order trail</text>
+  <text x="270" y="474" class="small muted">SO353 · 125 Quire inc.</text>
+  <rect x="650" y="440" width="98" height="28" rx="14" fill="#D9E8DF"/>
+  <text x="699" y="459" text-anchor="middle" class="small" fill="#245B46" font-weight="600">Reference</text>
+  <rect x="851" y="436" width="214" height="39" rx="6" fill="#17675F"/>
+  <text x="871" y="461" class="small" font-weight="600" fill="#FFFFFF">Inspect record</text><use href="#arrow" x="1035" y="450" color="#FFFFFF"/>
+
+  <path d="M248 498h840" stroke="#DEE4DC"/>
+  <text x="270" y="529" class="medium">Check supplier variance</text>
+  <text x="270" y="555" class="small muted">Sample bill · 2 lines need a decision</text>
+  <rect x="650" y="521" width="117" height="28" rx="14" fill="#F2E6CD"/>
+  <text x="708.5" y="540" text-anchor="middle" class="small" fill="#755018" font-weight="600">Needs review</text>
+  <rect x="851" y="517" width="214" height="39" rx="6" fill="#FBFCF9" stroke="#A7BFB2"/>
+  <text x="871" y="542" class="small teal" font-weight="600">Review bill</text><use href="#arrow" x="1035" y="531" color="#17675F"/>
+
+  <path d="M248 579h840" stroke="#DEE4DC"/>
+  <text x="270" y="610" class="medium">Release a purchase order</text>
+  <text x="270" y="636" class="small muted">Sample purchase · approval assigned to you</text>
+  <rect x="650" y="602" width="117" height="28" rx="14" fill="#F2E6CD"/>
+  <text x="708.5" y="621" text-anchor="middle" class="small" fill="#755018" font-weight="600">Approval due</text>
+  <rect x="851" y="598" width="214" height="39" rx="6" fill="#FBFCF9" stroke="#A7BFB2"/>
+  <text x="871" y="623" class="small teal" font-weight="600">Review approval</text><use href="#arrow" x="1035" y="612" color="#17675F"/>
+
+  <path d="M248 660h840" stroke="#DEE4DC"/>
+  <text x="270" y="691" class="medium">Receive an incoming delivery</text>
+  <text x="270" y="717" class="small muted">Sample receipt · San Francisco</text>
+  <rect x="650" y="683" width="80" height="28" rx="14" fill="#E5ECE6"/>
+  <text x="690" y="702" text-anchor="middle" class="small" fill="#42564B" font-weight="600">Ready</text>
+  <rect x="851" y="679" width="214" height="39" rx="6" fill="#FBFCF9" stroke="#A7BFB2"/>
+  <text x="871" y="704" class="small teal" font-weight="600">Start receipt</text><use href="#arrow" x="1035" y="693" color="#17675F"/>
+
+  <path d="M248 741h840" stroke="#DEE4DC"/>
+  <text x="270" y="772" class="medium">Resolve a stock exception</text>
+  <text x="270" y="798" class="small muted">Sample transfer · quantity unavailable</text>
+  <rect x="650" y="764" width="85" height="28" rx="14" fill="#F3E1D9"/>
+  <text x="692.5" y="783" text-anchor="middle" class="small" fill="#8B4432" font-weight="600">Blocked</text>
+  <rect x="851" y="760" width="214" height="39" rx="6" fill="#FBFCF9" stroke="#A7BFB2"/>
+  <text x="871" y="785" class="small teal" font-weight="600">Resolve quantity</text><use href="#arrow" x="1035" y="774" color="#17675F"/>
+
+  <path d="M248 822h840" stroke="#DEE4DC"/>
+  <text x="270" y="853" class="medium">Follow up on a draft quote</text>
+  <text x="270" y="879" class="small muted">Sample quote · assigned follow-up</text>
+  <rect x="650" y="845" width="75" height="28" rx="14" fill="#E6E9EB"/>
+  <text x="687.5" y="864" text-anchor="middle" class="small" fill="#4A5E6A" font-weight="600">Draft</text>
+  <rect x="851" y="841" width="214" height="39" rx="6" fill="#FBFCF9" stroke="#A7BFB2"/>
+  <text x="871" y="866" class="small teal" font-weight="600">Open quote</text><use href="#arrow" x="1035" y="855" color="#17675F"/>
+
+  <text x="248" y="934" class="small muted">Saved view: Priority work</text>
+  <text x="1087" y="934" text-anchor="end" class="small muted">6 items · task data is illustrative</text>
+  <path d="M248 954h840" stroke="#D6DED5"/>
+  <text x="248" y="980" class="small muted">Priority rules to review: blockers, due dates, and role relevance.</text>
+
+  <!-- Side context is tied to the selected record and never covers the queue. -->
+  <rect x="1120" y="122" width="380" height="878" fill="#FBFCF9"/>
+  <path d="M1120.5 122v878" stroke="#D3DBD4"/>
+  <text x="1148" y="160" class="label muted">RECORD CONTEXT</text>
+  <path d="M1458 147l10 10m0-10l-10 10" stroke="#586971" stroke-width="1.5"/>
+  <text x="1148" y="204" font-size="30" font-weight="700">SO353</text>
+  <rect x="1395" y="181" width="77" height="28" rx="14" fill="#E2F0EA"/>
+  <text x="1433.5" y="200" text-anchor="middle" class="small teal" font-weight="600">Billed</text>
+  <text x="1148" y="235" font-size="18" font-weight="600">125 Quire inc.</text>
+  <text x="1148" y="260" class="small muted">Sales order · USD · Subsidiary 1</text>
+  <path d="M1148 280h324" stroke="#D9E0D8"/>
+  <text x="1148" y="309" class="label muted">ORDER TOTAL</text>
+  <text x="1148" y="355" font-size="37" font-weight="600" letter-spacing="-0.6" class="number">1,807.50</text>
+  <text x="1323" y="354" class="small muted">USD</text>
+  <text x="1148" y="384" class="small muted">Invoice amount due</text>
+  <text x="1472" y="384" text-anchor="end" class="body number" font-weight="600">0.00</text>
+  <path d="M1148 405h324" stroke="#D9E0D8"/>
+  <text x="1148" y="438" class="small teal" font-weight="700">Overview</text>
+  <text x="1261" y="438" class="small muted">History</text>
+  <text x="1361" y="438" class="small muted">Files</text>
+  <path d="M1148 455h324" stroke="#D9E0D8"/>
+  <path d="M1148 454h76" stroke="#17675F" stroke-width="3"/>
+  <text x="1148" y="490" class="medium">Order to cash</text>
+  <path d="M1160 522v204" stroke="#B5CEC0" stroke-width="2"/>
+  <use href="#check" x="1160" y="523"/>
+  <text x="1182" y="523" class="body" font-weight="600">Sales order SO353</text>
+  <text x="1182" y="546" class="small muted">Billed · 07 Sep 2024</text>
+  <use href="#check" x="1160" y="589"/>
+  <text x="1182" y="589" class="body" font-weight="600">Fulfillment IF364</text>
+  <text x="1182" y="612" class="small muted">Shipped · 07 Sep 2024</text>
+  <use href="#check" x="1160" y="655"/>
+  <text x="1182" y="655" class="body" font-weight="600">Invoice INV336</text>
+  <text x="1182" y="678" class="small muted">Paid in full · 08 Sep 2024</text>
+  <use href="#check" x="1160" y="721"/>
+  <text x="1182" y="721" class="body" font-weight="600">Payment PYMT437</text>
+  <text x="1182" y="744" class="small muted">Deposited · 11 Sep 2024</text>
+  <rect x="1148" y="769" width="324" height="60" rx="6" fill="#EDF1EA"/>
+  <text x="1162" y="791" class="small" font-weight="600">Captured record example</text>
+  <text x="1162" y="812" font-size="13" class="muted">Statuses reflect the saved references.</text>
+  <rect x="1148" y="851" width="324" height="44" rx="7" fill="#17675F"/>
+  <text x="1167" y="879" class="body" font-weight="600" fill="#FFFFFF">Open full record</text>
+  <path d="M1440 866h11v11M1451 866l-12 12" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="1148" y="908" width="324" height="44" rx="7" fill="#FBFCF9" stroke="#A7BFB2"/>
+  <text x="1310" y="936" text-anchor="middle" class="body teal" font-weight="600">View invoice ledger impact</text>
+  <text x="1310" y="978" text-anchor="middle" class="small muted">Proposal controls are inactive.</text>
+</svg>
