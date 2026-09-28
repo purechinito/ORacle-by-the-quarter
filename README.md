@@ -22,7 +22,7 @@ The preview starts with **60 synthetic demo parts** and explicitly labeled openi
 - Separate preview-first opening-stock CSV import; manager adjustments and immutable stock movements.
 - Suppliers, editable purchase drafts, submitted orders, partial receipts, recorded cancellation reasons and over-receipt protection.
 - Saved sales carts, customers, manager price overrides with a reason, cash/external-payment records, decimal totals, printable receipts showing tender/change, and linked restockable/damaged returns with external-refund tracking.
-- Shop settings, operational totals, stock export, searchable activity log, paginated history and safe retry protection for postings. Carts and uncertain attempts survive navigation and reload in the same tab.
+- Shop settings, role-scoped operational reports, a Philippine-today dashboard with matching report drilldown, stock export, searchable activity log, paginated history and safe retry protection for postings. Carts and uncertain attempts survive navigation and reload in the same tab.
 - Customer and supplier directories with complete server search, Philippine addresses, protected identifiers, account history, inactive controls and stale-edit protection.
 - Audited staff role/active changes, password resets and session revocation with manager lockout protection.
 - Manager-only manual PHP ledger: chart of accounts, date-only periods, balanced immutable journals, linked reversals, period closing/reopening and trial-balance drilldowns. Operational documents are not yet automatically posted.
@@ -30,7 +30,7 @@ The preview starts with **60 synthetic demo parts** and explicitly labeled openi
 
 See [Philippine setup](docs/PHILIPPINES.md). Start with [the shop walkthrough](docs/SHOP-WALKTHROUGH.md) and the sample [catalog CSV](examples/parts-template.csv) and [opening stock CSV](examples/opening-stock-template.csv). Replace the sample rows with approved business data.
 
-See [full ERP coverage](docs/FULL-ERP-COVERAGE.md), [manual finance scope](docs/FINANCE.md), [pilot limitations](docs/COVERAGE.md), [runbook](docs/RUNBOOK.md), [pilot checklist](docs/PILOT.md), the [approved design](docs/superpowers/specs/2026-09-28-auto-supply-erp-design.md) and [implementation plan](docs/superpowers/plans/2026-09-28-auto-supply-erp.md).
+See [full ERP coverage](docs/FULL-ERP-COVERAGE.md), [permissions](docs/PERMISSIONS.md), [manual finance scope](docs/FINANCE.md), [pilot limitations](docs/COVERAGE.md), [runbook](docs/RUNBOOK.md), [pilot checklist](docs/PILOT.md), the [approved design](docs/superpowers/specs/2026-09-28-auto-supply-erp-design.md) and [implementation plan](docs/superpowers/plans/2026-09-28-auto-supply-erp.md).
 
 ## Verify
 
@@ -42,7 +42,7 @@ npm run build
 
 Tests start isolated PostgreSQL clusters and cover real API/database behavior, 5,000 synthetic parts, stock races, duplicate submissions and restore. They require permission to start local processes and allocate PostgreSQL shared memory.
 
-The current automated suite has 71 passing checks; type checking and production build also pass. These include currency boundaries, complete party search, staff access changes, journal posting/reversal, close/post concurrency and financial restore. The foundation source review found four issues; all were corrected, with regression evidence for duplicate CSV headers, reversal integrity during restore, retained recovery details and period error messages. Browser behavior remains unverified.
+The current automated suite has 74 passing checks; type checking and production build also pass. These include currency boundaries, complete party search, staff access changes, journal posting/reversal, close/post concurrency and financial restore. The foundation source review found four issues; all were corrected, with regression evidence for duplicate CSV headers, reversal integrity during restore, retained recovery details and period error messages. Browser behavior remains unverified.
 
 Browser tests are provided but were not executed in the authoring environment because a saved browser permission blocked local preview access. To run them yourself with the local preview running, set `ERP_TEST_USERNAME` and `ERP_TEST_PASSWORD`, then run `npm run test:e2e` after installing the Playwright Chromium browser. Use a disposable demo database.
 

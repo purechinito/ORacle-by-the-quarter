@@ -298,9 +298,15 @@ export function Settings() {
     </>
   );
 }
-export function Reports({ role }: { role: string }) {
-  const [from, setFrom] = useState(""),
-    [to, setTo] = useState(""),
+export function Reports({
+  role,
+  initialRange,
+}: {
+  role: string;
+  initialRange: { from: string; to: string };
+}) {
+  const [from, setFrom] = useState(initialRange.from),
+    [to, setTo] = useState(initialRange.to),
     [page, setPage] = useState(1),
     [receipt, setReceipt] = useState<any>(null),
     [message, setMessage] = useState("");
@@ -314,33 +320,35 @@ export function Reports({ role }: { role: string }) {
   );
   return (
     <>
-      <div className="toolbar">
-        <Field label="From date">
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => {
-              setFrom(e.target.value);
-              setPage(1);
-            }}
-          />
-        </Field>
-        <Field label="Through date">
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => {
-              setTo(e.target.value);
-              setPage(1);
-            }}
-          />
-        </Field>
-        {role === "manager" && (
-          <a className="button" href="/api/reports/export">
-            Export stock (PHP) CSV ↓
-          </a>
-        )}
-      </div>
+      {role !== "stock" && (
+        <div className="toolbar">
+          <Field label="From date">
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => {
+                setFrom(e.target.value);
+                setPage(1);
+              }}
+            />
+          </Field>
+          <Field label="Through date">
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => {
+                setTo(e.target.value);
+                setPage(1);
+              }}
+            />
+          </Field>
+          {role === "manager" && (
+            <a className="button" href="/api/reports/export">
+              Export stock (PHP) CSV ↓
+            </a>
+          )}
+        </div>
+      )}
       <Notice>{error || message}</Notice>
       {receipt && (
         <Receipt
@@ -354,69 +362,94 @@ export function Reports({ role }: { role: string }) {
         <>
           <p className="muted">
             {d.location} · {d.timezone} ·{" "}
-            {d.currency || "Currency not configured"} · {from || "All dates"}{" "}
-            through {to || "today"}
+            {d.currency || "Currency not configured"}
+            {d.scope !== "inventory" && (
+              <>
+                {" "}
+                · {from || "All dates"} through {to || "no end date"}
+              </>
+            )}
+          </p>
+          <p className="hint">
+            {d.scope === "business"
+              ? "Business-wide operational totals"
+              : d.scope === "own-sales"
+                ? "Only your sales and their payment/return records"
+                : "Inventory and receiving overview"}
+            . Stock figures show the current position.
           </p>
           <div className="stat-grid">
-            {[
-              ["Sales recorded", pesos(d.salesTotal)],
-              ["Payments recorded", pesos(d.paymentTotal)],
-              ["Posted sales", d.salesCount],
-              ["Return records", d.returns],
-            ].map(([label, value]) => (
+            {(d.scope === "inventory"
+              ? [
+                  ["Active parts", d.parts],
+                  ["Units on hand", d.units],
+                  ["Low-stock parts", d.low],
+                  ["Purchases awaiting stock", d.outstanding],
+                ]
+              : [
+                  ["Sales recorded", pesos(d.salesTotal)],
+                  ["Payments recorded", pesos(d.paymentTotal)],
+                  ["Posted sales", d.salesCount],
+                  ["Return records", d.returns],
+                ]
+            ).map(([label, value]) => (
               <article key={label} className="stat">
                 <span>{label}</span>
                 <strong>{value}</strong>
               </article>
             ))}
           </div>
-          <section className="panel">
-            <div className="panel-title">
-              <h2>Supporting sales</h2>
-              <span className="muted">{d.salesCount} sales in date range</span>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Reference</th>
-                  <th>Posted</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.recent.map((s: any) => (
-                  <tr key={s.id}>
-                    <td className="mono">
-                      {role === "manager" ? (
-                        <button
-                          className="row-link"
-                          onClick={async () => {
-                            try {
-                              setReceipt(await api("/sales/" + s.id));
-                            } catch (e: any) {
-                              setMessage(e.message);
-                            }
-                          }}
-                        >
-                          {short(s.id)}
-                        </button>
-                      ) : (
-                        short(s.id)
-                      )}
-                    </td>
-                    <td>{phDateTime(s.posted_at)}</td>
-                    <td>{pesos(s.total)}</td>
+          {d.scope !== "inventory" && (
+            <section className="panel">
+              <div className="panel-title">
+                <h2>Supporting sales</h2>
+                <span className="muted">
+                  {d.salesCount} sales in date range
+                </span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Reference</th>
+                    <th>Posted</th>
+                    <th>Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pager page={page} onPage={setPage} count={d.recent.length} />
-            <p className="hint pad">
-              Sales and payments are gross recorded totals. Returns and external
-              refunds are tracked separately; these figures are not profit or
-              net revenue.
-            </p>
-          </section>
+                </thead>
+                <tbody>
+                  {d.recent.map((s: any) => (
+                    <tr key={s.id}>
+                      <td className="mono">
+                        {role !== "stock" ? (
+                          <button
+                            className="row-link"
+                            onClick={async () => {
+                              try {
+                                setReceipt(await api("/sales/" + s.id));
+                              } catch (e: any) {
+                                setMessage(e.message);
+                              }
+                            }}
+                          >
+                            {short(s.id)}
+                          </button>
+                        ) : (
+                          short(s.id)
+                        )}
+                      </td>
+                      <td>{phDateTime(s.posted_at)}</td>
+                      <td>{pesos(s.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pager page={page} onPage={setPage} count={d.recent.length} />
+              <p className="hint pad">
+                Sales and payments are gross recorded totals. Returns and
+                external refunds are tracked separately; these figures are not
+                profit or net revenue.
+              </p>
+            </section>
+          )}
         </>
       )}
     </>

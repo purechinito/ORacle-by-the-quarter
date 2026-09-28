@@ -11,10 +11,10 @@ Paths below are repository-relative. `api` = apps/api/src/modules; `web` = apps/
 | ID / capability | Source | State | UI / API / data | Acceptance / evidence / unresolved decision |
 |---|---|---|---|---|
 | M01.1 Role-aware shell | S001/002/035 | implemented | App.tsx; auth.ts | Existing manager/counter/stock navigation; browser unverified |
-| M01.2 Real shop indicators | S001/032 | tested | reports.ts; App.tsx | shop.test; all-time gross sales, stock, low-stock and PO count; not financial books |
+| M01.2 Real shop indicators | S001/032 | tested | reports.ts; App.tsx | report-scope/shop tests; role-scoped Philippine-today gross sales, active stock/low-stock and authorized PO counts; not financial books |
 | M01.3 Global search/recent records | P | planned | — | Search authorized records and navigate to result |
 | M01.4 Saved views/dashboard arrangement | S007/021; P | planned | — | Persist each user's views and arrangement |
-| M01.5 Scoped queues/drilldowns | S001/005 | planned | — | Count agrees with filtered destination and access scope |
+| M01.5 Scoped queues/drilldowns | S001/005 | implemented | reports.ts; App.tsx | Today’s sales → Reports preserves resolved date range and actor scope; remaining low-stock/PO/AR/AP/approval drilldowns planned |
 | M02.1 Catalog/aliases/fitment/substitutes | S013/014; P/user | tested | catalog.ts; Catalog.tsx; parts | shop/edge/pilot/review-regressions; inactive, duplicates and fitment |
 | M02.2 3,000+ SKU search/page scale | P/user | implemented | catalog.ts; parts search_key | 5,000-SKU result test exists; p95/index proof pending |
 | M02.3 Catalog import preview/commit | P | tested | catalog.ts; import_previews | shop/edge tests; duplicate errors and atomic commit |
@@ -65,7 +65,7 @@ Paths below are repository-relative. `api` = apps/api/src/modules; `web` = apps/
 | M10.4 Marketing/contact preferences | A; P | planned | — | Campaign register; sending needs explicit authorization |
 | M10.5 Employees/projects/time/cost | A; P | planned | — | Persist activities/costs and job profitability |
 | M10.6 Payroll/advanced extensions | P | blocked | — | Discovery-needed scope and statutory requirements, not claimed supported |
-| M11.1 Operational summaries/export | S019; P | tested | reports.ts; Operations.tsx | shop/philippines; gross totals, date filters, safe CSV |
+| M11.1 Operational summaries/export | S019; P | tested | reports.ts; Operations.tsx | report-scope/shop/philippines; actor-scoped totals and rows in one snapshot, explicit inventory-only response, date filters, safe CSV |
 | M11.2 Governed measures/datasets/workbooks | S021/022 library only; P | planned | — | Authorized field selection, aggregation, pivot/chart output |
 | M11.3 Saved reports/schedules | A; P | planned | — | Persist filters/columns; authorized job delivery |
 | M11.4 Margin/aging/turnover/supplier/returns reports | A; P | planned | — | Source-ledger reconciliation and consistent access scope |

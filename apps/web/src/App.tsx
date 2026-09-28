@@ -12,6 +12,7 @@ export default function App() {
   const [user, setUser] = useState<any>(null),
     [loading, setLoading] = useState(true),
     [page, setPage] = useState("Overview"),
+    [reportRange, setReportRange] = useState({ from: "", to: "" }),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [transactionBusy, setTransactionBusy] = useState(false);
@@ -218,7 +219,12 @@ export default function App() {
             <span className="location-pill">● Main stockroom</span>
           </header>
           {page === "Overview" ? (
-            <Overview navigate={setPage} />
+            <Overview
+              navigate={(next, range) => {
+                setReportRange(range || { from: "", to: "" });
+                setPage(next);
+              }}
+            />
           ) : page === "Parts" ? (
             <Catalog role={user.role} />
           ) : page === "Counter sales" ? (
@@ -232,7 +238,7 @@ export default function App() {
           ) : page === "Suppliers" ? (
             <Relationships kind="suppliers" role={user.role} />
           ) : page === "Reports" ? (
-            <Reports role={user.role} />
+            <Reports role={user.role} initialRange={reportRange} />
           ) : page === "Finance" ? (
             <Finance onBusyChange={setTransactionBusy} />
           ) : page === "Activity log" ? (
@@ -245,8 +251,12 @@ export default function App() {
     </div>
   );
 }
-function Overview({ navigate }: { navigate: (p: string) => void }) {
-  const { data: d, error } = useData("/reports");
+function Overview({
+  navigate,
+}: {
+  navigate: (p: string, range?: { from: string; to: string }) => void;
+}) {
+  const { data: d, error } = useData("/reports?period=today&limit=7");
   return (
     <>
       <Notice>{error}</Notice>
@@ -264,11 +274,15 @@ function Overview({ navigate }: { navigate: (p: string) => void }) {
                 d.units.toLocaleString("en-PH"),
                 "units across the shop",
               ],
-              [
-                "Recorded sales",
-                pesos(d.salesTotal),
-                `${d.salesCount} posted sales · all time`,
-              ],
+              d.scope === "inventory"
+                ? ["Awaiting stock", d.outstanding, "open purchase orders"]
+                : [
+                    d.scope === "own-sales"
+                      ? "Your sales today"
+                      : "Sales today",
+                    pesos(d.salesTotal),
+                    `${d.salesCount} posted sales · ${d.range.from} PHT`,
+                  ],
               ["Needs restocking", d.low, "parts at or below reorder point"],
             ].map(([label, value, note]) => (
               <article className="stat" key={label}>
@@ -340,48 +354,63 @@ function Overview({ navigate }: { navigate: (p: string) => void }) {
               <button onClick={() => navigate("Stock movements")}>
                 Check stock history <span>↗</span>
               </button>
-              <div className="work-count">
-                <strong>{d.outstanding}</strong>
-                <span>
-                  purchase orders
-                  <br />
-                  awaiting stock
-                </span>
-              </div>
+              {d.outstanding !== null && (
+                <div className="work-count">
+                  <strong>{d.outstanding}</strong>
+                  <span>
+                    purchase orders
+                    <br />
+                    awaiting stock
+                  </span>
+                </div>
+              )}
             </section>
           </div>
-          <section className="panel recent">
-            <div className="panel-title">
-              <h2>Recent sales</h2>
-              <span className="muted">Posted transactions</span>
-            </div>
-            {d.recent.length ? (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Reference</th>
-                    <th>Posted</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.recent.map((s: any) => (
-                    <tr key={s.id}>
-                      <td className="mono">{s.id.slice(0, 8).toUpperCase()}</td>
-                      <td>{phDateTime(s.posted_at)}</td>
-                      <td>{pesos(s.total)}</td>
-                      <td>
-                        <span className="badge">Posted</span>
-                      </td>
+          {d.scope !== "inventory" && (
+            <section className="panel recent">
+              <div className="panel-title">
+                <h2>
+                  {d.scope === "own-sales"
+                    ? "Your sales today"
+                    : "Today's sales"}
+                </h2>
+                <button
+                  className="text-button"
+                  onClick={() => navigate("Reports", d.range)}
+                >
+                  View today's report ↗
+                </button>
+              </div>
+              {d.recent.length ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Reference</th>
+                      <th>Posted</th>
+                      <th>Amount</th>
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="empty">Your posted sales will appear here.</div>
-            )}
-          </section>
+                  </thead>
+                  <tbody>
+                    {d.recent.map((s: any) => (
+                      <tr key={s.id}>
+                        <td className="mono">
+                          {s.id.slice(0, 8).toUpperCase()}
+                        </td>
+                        <td>{phDateTime(s.posted_at)}</td>
+                        <td>{pesos(s.total)}</td>
+                        <td>
+                          <span className="badge">Posted</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="empty">Your posted sales will appear here.</div>
+              )}
+            </section>
+          )}
         </>
       ) : (
         <div className="empty">Loading shop overview…</div>
