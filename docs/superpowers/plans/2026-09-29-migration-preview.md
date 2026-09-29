@@ -1,6 +1,6 @@
 # Migration Preview Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Deliver a working, authenticated CSV migration preview for customers, suppliers and items without creating business records.
 
@@ -34,10 +34,10 @@
 
 **Interfaces:** `profile_csv(content, kind) -> dict`; `validate_csv(content, kind, mapping) -> dict`; `SCHEMAS` declares fields, defaults, required flags and references. Results contain fingerprint, rows/counts, issues with row/field/code/message and unmapped columns. Fingerprint includes type, exact input and mapping; it is provenance, not an authorization token.
 
-- [ ] Write tests for quoted/Unicode data, malformed rows, limits, missing/duplicate headers, required mappings/values, duplicates, boolean values, unmapped columns, formula-like strings and fingerprint invalidation.
-- [ ] Run `PYTHONPATH=apps/quarter_erp python3 -m unittest discover -s tests -p test_migration_core.py -v`; expect missing-module failure before implementation.
-- [ ] Implement strict parsing and deterministic validation with bounded returned samples/issues.
-- [ ] Run the same tests; expect all pass. Commit task.
+- [x] Write tests for quoted/Unicode data, malformed rows, limits, missing/duplicate headers, required mappings/values, duplicates, boolean values, unmapped columns, formula-like strings and fingerprint invalidation.
+- [x] Run `PYTHONPATH=apps/quarter_erp python3 -m unittest discover -s tests -p test_migration_core.py -v`; expect missing-module failure before implementation.
+- [x] Implement strict parsing and deterministic validation with bounded returned samples/issues.
+- [x] Run the same tests; expect all pass. Commit task.
 
 ### Task 2: Permission-checked preview endpoint
 
@@ -45,10 +45,10 @@
 
 **Interfaces:** authenticated `options()` GET; `profile(company, kind, content)` POST; `preview(company, kind, content, mapping)` POST. Preview consumes Task 1 results and checks allowed target/reference records. `options` supplies fields, limits, companies and CSRF token. No saved batch and no import endpoint.
 
-- [ ] Write real Frappe tests for guest/nonmanager denial, invalid company/type, options, invalid references, existing-name conflicts and no-write counts; verify totals remain accurate beyond the displayed issue cap.
-- [ ] Run tests against current engine; expect missing-module failure.
-- [ ] Implement endpoints with native filtered queries and add suite runner coverage. Preserve `view=migration` through login.
-- [ ] Build local workspace image and run endpoint tests; expect all pass. Commit task.
+- [x] Write real Frappe tests for guest/nonmanager denial, invalid company/type, options, invalid references, existing-name conflicts and no-write counts; verify totals remain accurate beyond the displayed issue cap.
+- [x] Run tests against current engine; expect missing-module failure.
+- [x] Implement endpoints with native filtered queries and add suite runner coverage. Preserve `view=migration` through login.
+- [x] Build local workspace image and run endpoint tests; expect all pass. Commit task.
 
 ### Task 3: Connected migration wizard and release verification
 
@@ -56,11 +56,15 @@
 
 **Interfaces:** standalone `/orbit?view=migration` consumes Task 2 endpoints; source bytes are decoded as UTF-8 and remain in component memory only. JSON review downloads include fingerprint/mapping/counts/issues, not raw source rows.
 
-- [ ] Verify missing migration route in browser before adding UI.
-- [ ] Build a three-step wizard: source/type/company → mapping → validation. Use existing ivory/slate/teal style, readable tables, associated labels, errors, progress and keyboard focus. Template/example downloads use static synthetic text only.
-- [ ] Invalidate old results immediately on edits; abort stale requests and guard async file reads. Provide clear loading, retry, empty, blocked and successful states. Results say preview only and identify shared masters/reference-check limits.
-- [ ] Run TypeScript/Vite build and full integration suite. Browser-test valid/invalid CSV, remapping, duplicate reports, JSON download and 390px layout with no page overflow. Confirm no business records added.
-- [ ] Run a fresh code review, address material findings, document evidence/limits, commit and retain running app.
+- [x] Verify missing migration route in browser before adding UI.
+- [x] Build a three-step wizard: source/type/company → mapping → validation. Use existing ivory/slate/teal style, readable tables, associated labels, errors, progress and keyboard focus. Template/example downloads use static synthetic text only.
+- [x] Invalidate old results immediately on edits; abort stale requests and guard async file reads. Provide clear loading, retry, empty, blocked and successful states. Results say preview only and identify shared masters/reference-check limits.
+- [x] Run TypeScript/Vite build and full integration suite. Browser-test valid/invalid CSV, remapping, duplicate reports, JSON download and 390px layout with no page overflow. Confirm no business records added.
+- [x] Run a fresh code review, address material findings, document evidence/limits, commit and retain running app.
+
+## Completion evidence
+
+Implemented and verified on `orbit-erp:786ce91d2e6abf7d`; all 55 automated tests passed. Browser checks and the file-picker automation limitation are recorded in `docs/migration-preview-verification.md`. Tasks 2 and 3 ship together after integration verification.
 
 ## Coverage and deferrals
 

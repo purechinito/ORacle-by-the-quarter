@@ -85,12 +85,14 @@ def fingerprint(content, kind, mapping):
 def profile_csv(content, kind):
     schema = schema_for(kind)
     headers, rows = parse_csv(content)
-    normalized = {h.casefold().replace(" ", "_"): h for h in headers}
+    normalized = defaultdict(list)
+    for header in headers:
+        normalized[header.casefold().replace(" ", "_")].append(header)
     mapping = {}
     for spec in schema["fields"]:
         # Exact target field names only. Ambiguous generic headings stay unassigned.
-        if spec["key"] in normalized:
-            mapping[spec["key"]] = normalized[spec["key"]]
+        if len(normalized[spec["key"]]) == 1:
+            mapping[spec["key"]] = normalized[spec["key"]][0]
     return {"headers": headers, "row_count": len(rows), "sample": [r[1] for r in rows[:5]],
             "mapping": mapping, "fingerprint": fingerprint(content, kind, mapping)}
 

@@ -49,6 +49,11 @@ class MigrationCore(unittest.TestCase):
         self.assertNotEqual(a, validate_csv(self.content+'002,B,G,T\n', "customers", self.mapping)["fingerprint"])
         self.assertNotEqual(a, validate_csv(self.content, "customers", {**self.mapping,"customer_name":"Group","customer_group":"Name"})["fingerprint"])
 
+    def test_ambiguous_normalized_headers_require_manual_choice(self):
+        profile = profile_csv('source_id,customer_name,customer name\n01,Correct name,Other name', 'customers')
+        self.assertEqual(profile['mapping'], {'source_id':'source_id'})
+        self.assertEqual(profile['headers'], ['source_id','customer_name','customer name'])
+
     def test_item_boolean_is_strict_and_defaults_are_explicit(self):
         mapping = {"source_id":"ID","item_code":"Code","item_name":"Name","item_group":"Group","stock_uom":"Unit","is_stock_item":"Stock"}
         r = validate_csv('ID,Code,Name,Group,Unit,Stock\n01,PART1,Part,G,Nos,yes\n02,PART2,Part,G,Nos,maybe', 'items', mapping)

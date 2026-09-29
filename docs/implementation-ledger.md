@@ -7,6 +7,13 @@
 - Plan: `docs/superpowers/plans/2026-09-29-migration-preview.md`. Parser → authorized endpoint → wizard share the documented JSON contract. Preview is intentionally non-persisting; no import command is exposed.
 - Task 1: nine pure-parser tests first failed for the absent module, then all passed. Checks include multiline CSV, leading zeros, limits, duplicates, mappings, boolean validation and full counts with bounded issue output.
 - Task 2: six database-backed preview tests first failed for the absent endpoint module. Authorization and reference checks now under implementation.
+- Task 2 findings: direct Python test calls have no HTTP session object, so CSRF/options verification moved to real HTTP tests rather than weakening the endpoint. The scoped manager fixture requires native Sales Master Manager grants, not Sales Manager. Six data/permission tests and two HTTP tests then passed.
+- Additional negative input test reproduced acceptance of null and query-operator company inputs; validate the exact company string before using native filters. Final runtime verification is pending the rebuilt image.
+- Task 3: confirmed the migration URL still showed Sales before implementing the wizard. Connected source selection, column mapping, live preview, counts/issues, templates and JSON review download. No source data is stored in localStorage/sessionStorage or uploaded as a File record.
+- Fresh reviewer identified ambiguous normalized header suggestions. Added a failing regression for `customer_name` plus `customer name`, then left ambiguous targets unmapped. All ten parser tests now pass. Timestamp output now carries UTC offset; form controls have stable accessible names.
+- Release verification: image `orbit-erp:786ce91d2e6abf7d` installed; TypeScript/Vite build and all 55 current tests passed. Strict company validation, native permissions, CSRF and no-write checks passed on the rebuilt runtime.
+- Chrome verified customer/supplier/item examples, malformed-input recovery, required remapping, duplicate/reference/existing-record issues, unmapped columns and downloaded JSON without raw rows. At 390px, page width remained 390px. File-picker automation remains unverified because the extension does not allow file URL access; pasted CSV and samples work, and no permission bypass was attempted.
+- Migration preview is delivered; actual import and the other approved expansion subsystems remain pending. Evidence, screenshots and limitations: `docs/migration-preview-verification.md`.
 
 ## 2026-09-29 — foundation execution
 

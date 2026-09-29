@@ -6,6 +6,8 @@ A separate ERP project intended to reproduce the confirmed NetSuite training acc
 
 The Sales workspace now creates real sales-order drafts with permission-filtered customer/item/warehouse choices, native validation and ERP-calculated totals. An interrupted save retains its command in the current tab's session for an identical retry. Advanced fields, existing-order editing and submission still use the full ERP. See [draft verification](docs/draft-command-verification.md) for limitations and evidence.
 
+The [Migration studio](http://127.0.0.1:8080/orbit?view=migration) now previews customer, supplier and item CSV exports. System managers can map columns, find duplicates and unavailable references, and download a review report. Preview creates no ERP records; actual import, reconciliation and migration receipts remain pending. See [migration verification](docs/migration-preview-verification.md).
+
 ## Run locally
 
 Open **http://127.0.0.1:8080/orbit** for the company workspace. Full ERP records and remaining modules are available at **http://127.0.0.1:8080/desk** under the same login.

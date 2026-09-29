@@ -3,11 +3,13 @@
 from pathlib import Path
 import subprocess
 import sys
+import os
 
 root = Path(__file__).resolve().parents[1]
 erp = str(root / "scripts/erp")
 subprocess.run([sys.executable, str(root / "tests/runtime_smoke.py")], check=True)
-for name in ["test_engine_journeys.py", "test_workspace.py", "test_draft_commands.py"]:
+subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_migration_core.py"], cwd=root, env={**os.environ, "PYTHONPATH":str(root / "apps/quarter_erp")}, check=True)
+for name in ["test_engine_journeys.py", "test_workspace.py", "test_draft_commands.py", "test_migration_access.py"]:
     source = (root / "tests" / name).read_text()
     subprocess.run([erp, "exec", "backend", "bash", "-c", "cat > /tmp/" + name],
                    input=source, text=True, check=True)
@@ -15,3 +17,4 @@ for name in ["test_engine_journeys.py", "test_workspace.py", "test_draft_command
                    "cd sites && /home/frappe/frappe-bench/env/bin/python /tmp/" + name], check=True)
 
 subprocess.run([sys.executable, str(root / "tests/test_command_http.py")], check=True)
+subprocess.run([sys.executable, str(root / "tests/test_migration_http.py")], check=True)
