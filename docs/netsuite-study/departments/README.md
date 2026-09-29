@@ -7,7 +7,7 @@ Purpose: small, focused study notes. Read one department per sitting.
 ## Start here
 | # | File | What you learn | Time |
 |---|---|---|---|
-| 0 | [00-how-netsuite-code-works.md](00-how-netsuite-code-works.md) | Records, transactions, status codes, the 12 script types, SuiteQL | 20 min |
+| 0 | [00-how-netsuite-code-works.md](00-how-netsuite-code-works.md) | Records, transactions, status codes, script types, SuiteQL | 20 min |
 | 1 | [01-sales.md](01-sales.md) | Selling, invoicing, customer returns | 15 min |
 | 2 | [02-purchasing.md](02-purchasing.md) | Buying, supplier bills, paying suppliers | 15 min |
 | 3 | [03-inventory-warehouse.md](03-inventory-warehouse.md) | Stock, receiving, shipping, bins, counts | 20 min |
