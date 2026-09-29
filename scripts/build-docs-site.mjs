@@ -1,11 +1,11 @@
-// Builds a static study site from docs/**/*.md into dist/. No dependencies.
+// Builds a static study site from docs/**/*.md into site/. No dependencies.
 // Markdown is rendered in the browser (marked + mermaid from jsDelivr).
 import { readdirSync, statSync, mkdirSync, copyFileSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { join, relative, dirname } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
 const src = join(root, 'docs');
-const out = join(root, 'dist');
+const out = join(root, 'site');
 
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -31,4 +31,4 @@ const pages = walk(src).sort((a, b) => sortKey(a).localeCompare(sortKey(b))).map
 
 writeFileSync(join(out, 'pages.json'), JSON.stringify(pages, null, 2));
 copyFileSync(join(root, 'scripts', 'docs-site.html'), join(out, 'index.html'));
-console.log(`Built ${pages.length} pages into dist/`);
+console.log(`Built ${pages.length} pages into site/`);

@@ -3,5 +3,5 @@
   "framework": null,
   "installCommand": "echo 'No dependencies to install'",
   "buildCommand": "node scripts/build-docs-site.mjs",
-  "outputDirectory": "dist"
+  "outputDirectory": "site"
 }
