@@ -1,0 +1,45 @@
+# Independent review and verification
+
+The initial implementation received a separate, read-only whole-branch review. The reviewer found no critical issues, three important correctness issues and one minor audit issue.
+
+Fixed with regression tests observed failing before the fix:
+
+1. Exact alias ownership now has a PostgreSQL unique constraint and synchronization trigger, preventing competing previews or manual edits from claiming the same exact alias. Punctuation-normalized alternatives remain distinct candidates.
+2. Receipt, return and adjustment requests preserve the original payload and idempotency key in session storage scoped to the signed-in user and workflow. Reopening an uncertain operation retries that operation; forms prevent edits during recovery and dismissal during a live request.
+3. Adding to a saved cart preserves its ID and invalidates displayed totals instead of creating another draft.
+
+The regression suite exercises competing alias commits, lost receipt/return responses with reopen, and resumed-cart editing. Snapshot verification includes stock, users, posted sales, payments and returns.
+
+The previously deferred cancellation reason is now stored on the purchase order and visible in its detail screen.
+
+The reviewer declined to judge visual/browser usability, production readiness and scanner behavior because browser access remained blocked. Those are still open checks. Existing tests were inspected by the reviewer; the author ran the test suite and regression fixes. A second independent read-only review covered the pilot expansion. It identified a delayed scanner response using old cart state, sales history filtering by draft date, and navigation during an in-flight checkout. These were corrected with current-context checks, posting-date filters and a shared navigation lock. The reviewer rechecked the fixes and reported no remaining important findings in that scope. Browser behavior remains unverified.
+
+## Implementation decisions
+
+- A fresh dedicated clone on a feature branch isolates this work; no prior user changes were present. Cost if unsuitable: relocate the checkout before integration.
+- Embedded PostgreSQL provides real development/test transactions where Docker/PostgreSQL were absent; production uses DATABASE_URL. Cost: a local binary dependency.
+- Small domain modules share an integration suite and transaction helpers. Cost: split modules as their responsibilities grow.
+- Related workflow tests were introduced before domain implementation to make shared contracts explicit. Cost: failures in a prerequisite can cascade into later scenarios.
+- One stock location uses a balance projection on each part and an immutable ledger. Cost: a per-location balance table is required before multiple locations.
+- Consistent application snapshots supplement managed database backups. Cost: matching-schema restoration only, not point-in-time recovery.
+- Browser denial was honored, including after conversational authorization did not change the saved setting. Cost: visual and browser workflow verification remains pending.
+- The result is a review build with explicit coverage gaps, not a claim of complete production readiness. Cost: those gaps need resolving before live use.
+
+## Pilot expansion verification
+
+32 tests pass across eight files using temporary PostgreSQL databases. New failing-then-passing cases cover purchase draft edits and cancellation reasons, persistent cash tender/change, audited refund confirmation without repeated stock movement, checkout retry after navigation and session expiry, history beyond 100 records with role scoping, substitute validation, discontinued-part returns/corrections, and posted-date history. Type checking, production build and whitespace checks pass.
+
+Import inputs are frozen during validation so the displayed CSV cannot diverge from the accepted preview. Receipt recovery is visible even after the order reaches received status. Browser/UI assertions have not been substituted for real browser testing.
+
+## Philippine localization
+
+User confirmed PHP-only Philippine operation. Five additional integration scenarios verify fixed locale defaults without choosing a tax treatment, rejection of other currencies/timezones before trading, database protection for settings and posted snapshots, Manila midnight boundaries in reports and four histories, and refusal to relabel a legacy non-PHP database. The full suite passes 37 checks; type checking and production build pass. Frontend formatters apply en-PH, PHP and Asia/Manila across the identified monetary/date surfaces. Browser verification remains pending.
+The independent localization source review found no important correctness issues. Its formatter smoke checks covered Manila midnight and large peso values. The export keeps its import-compatible price header and identifies PHP in its file name and download label.
+
+## Full ERP foundation review
+
+The independent source reviewer found three Important issues (duplicate CSV currency headers, editable uncertain reversal form, invalid reversal relationships accepted during restore) and one Minor issue (numeric period errors). Corrections reject duplicate columns before mapping, freeze uncertain reversal inputs and display the retained request, enforce reversal semantics through deferred database constraints, and return clear period errors. New tests reproduced ten failing assertions and now pass. Full suite: 71 tests across 14 files; typecheck and build pass. Browser verification is still blocked. Operational GL, valuation, AR/AP and the remaining full-suite scope remain unfinished.
+
+## Scoped reports and daily dashboard
+
+The follow-on report slice closes an ownership mismatch between aggregate reports and source sales. Counter staff receive their own sales/payment/return totals; stock staff receive inventory-only data. One repeatable-read transaction keeps totals and rows consistent. The dashboard resolves Philippine today on the server and passes those exact dates to Reports. Three new regression scenarios failed before the fix and passed afterward; the full suite passes 74 tests across 15 files, with typecheck and build passing. The independent source reviewer found no Important or Critical issues in this slice. Browser behavior, pagination interaction and scanner/printing remain unverified.

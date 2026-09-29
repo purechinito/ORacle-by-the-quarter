@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERP Study Library</title>
+<meta name="description" content="Study notes for the auto-parts ERP: NetSuite workflow study, department guides and the ERP design plan.">
+<style>
+  :root {
+    --bg: #f6f4f1; --surface: #ffffff; --text: #1d1d1f; --muted: #5f5b57;
+    --border: #e2ddd7; --nav: #232323; --nav-text: #e9e6e2; --nav-muted: #a29d97;
+    --accent: #d9661f; --code-bg: #f1eee9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161616; --surface: #1f1f1f; --text: #ece9e5; --muted: #a8a39d;
+      --border: #333; --nav: #111; --nav-text: #e9e6e2; --nav-muted: #8c8781;
+      --accent: #f0873f; --code-bg: #2a2a2a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161616; --surface: #1f1f1f; --text: #ece9e5; --muted: #a8a39d;
+    --border: #333; --nav: #111; --nav-text: #e9e6e2; --nav-muted: #8c8781;
+    --accent: #f0873f; --code-bg: #2a2a2a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+  nav { background: var(--nav); color: var(--nav-text); padding: 20px 16px; position: sticky; top: 0;
+    height: 100vh; overflow-y: auto; }
+  nav h1 { font-size: 17px; margin: 0 0 4px; }
+  nav p { color: var(--nav-muted); font-size: 13px; margin: 0 0 20px; }
+  nav h2 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--nav-muted);
+    margin: 20px 0 6px; }
+  nav a { display: block; color: var(--nav-text); text-decoration: none; font-size: 14px;
+    padding: 6px 10px; border-radius: 6px; border-left: 3px solid transparent; }
+  nav a:hover { background: rgba(255,255,255,.06); }
+  nav a.active { border-left-color: var(--accent); background: rgba(255,255,255,.08); }
+  main { padding: 32px 16px 64px; min-width: 0; }
+  article { max-width: 860px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 32px 40px; }
+  article h1 { margin-top: 0; font-size: 30px; line-height: 1.2; }
+  article h2 { margin-top: 36px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  a { color: var(--accent); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; display: block; overflow-x: auto; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code-bg); }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: .9em; }
+  pre { background: var(--code-bg); padding: 14px; border-radius: 8px; overflow-x: auto; }
+  pre code { padding: 0; background: none; }
+  details { background: var(--code-bg); border-radius: 8px; padding: 10px 14px; margin: 12px 0; }
+  summary { cursor: pointer; font-weight: 600; }
+  .mermaid { background: #fff; border-radius: 8px; padding: 12px; overflow-x: auto; text-align: center; }
+  .status { color: var(--muted); }
+  .menu-btn { display: none; }
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    nav { position: static; height: auto; display: none; }
+    nav.open { display: block; }
+    .menu-btn { display: block; width: 100%; background: var(--nav); color: var(--nav-text); border: 0;
+      padding: 12px 16px; font-size: 15px; text-align: left; }
+    article { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+<button class="menu-btn" id="menu">☰ Study library</button>
+<div class="layout">
+  <nav id="nav">
+    <h1>ERP Study Library</h1>
+    <p>NetSuite study notes and our ERP plan</p>
+    <div id="links"></div>
+  </nav>
+  <main><article id="content"><p class="status">Loading…</p></article></main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  const DEFAULT_PAGE = 'netsuite-study/departments/README.md';
+  const GROUP_NAMES = {
+    'netsuite-study/departments': 'Department study notes',
+    'netsuite-workflow-study': 'Workflow study',
+    'superpowers/specs': 'ERP design',
+    'superpowers/plans': 'ERP plan',
+    '.': 'App operations and coverage'
+  };
+  const content = document.getElementById('content');
+  const nav = document.getElementById('nav');
+  let pages = [];
+
+  document.getElementById('menu').onclick = () => nav.classList.toggle('open');
+
+  function resolve(base, href) {
+    const parts = base.split('/').slice(0, -1);
+    for (const piece of href.split('/')) {
+      if (piece === '..') parts.pop();
+      else if (piece && piece !== '.') parts.push(piece);
+    }
+    return parts.join('/');
+  }
+
+  function renderNav(current) {
+    const groups = {};
+    for (const page of pages) (groups[page.group] ||= []).push(page);
+    const order = Object.keys(GROUP_NAMES).filter((g) => groups[g])
+      .concat(Object.keys(groups).filter((g) => !GROUP_NAMES[g]));
+    const links = document.getElementById('links');
+    links.replaceChildren();
+    for (const group of order) {
+      const heading = document.createElement('h2');
+      heading.textContent = GROUP_NAMES[group] || group;
+      links.append(heading);
+      for (const page of groups[group]) {
+        const a = document.createElement('a');
+        a.href = '?p=' + encodeURIComponent(page.path);
+        a.textContent = page.title;
+        if (page.path === current) a.className = 'active';
+        links.append(a);
+      }
+    }
+  }
+
+  async function show(path) {
+    renderNav(path);
+    nav.classList.remove('open');
+    try {
+      const res = await fetch('docs/' + path);
+      if (!res.ok) throw new Error(res.status);
+      content.innerHTML = marked.parse(await res.text());
+    } catch {
+      content.innerHTML = '<h1>Page not found</h1><p class="status">That page isn\'t in the library.</p>';
+      return;
+    }
+    for (const a of content.querySelectorAll('a[href]')) {
+      const href = a.getAttribute('href');
+      if (/^[a-z]+:/i.test(href) || href.startsWith('#')) continue;
+      const [file] = href.split('#');
+      if (file.endsWith('.md')) a.href = '?p=' + encodeURIComponent(resolve(path, file));
+    }
+    const blocks = content.querySelectorAll('pre code.language-mermaid');
+    for (const code of blocks) {
+      const div = document.createElement('div');
+      div.className = 'mermaid';
+      div.textContent = code.textContent;
+      code.parentElement.replaceWith(div);
+    }
+    if (blocks.length) await mermaid.run({ querySelector: '.mermaid' });
+    document.title = (content.querySelector('h1')?.textContent || 'Study') + ' · ERP Study Library';
+    window.scrollTo(0, 0);
+  }
+
+  mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+  fetch('pages.json').then((r) => r.json()).then((list) => {
+    pages = list;
+    const requested = new URLSearchParams(location.search).get('p');
+    show(pages.some((p) => p.path === requested) ? requested : DEFAULT_PAGE);
+  });
+</script>
+</body>
+</html>
