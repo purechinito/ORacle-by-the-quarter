@@ -46,6 +46,7 @@ Later, a pending approval state can be added without changing the link to the or
 - [ ] Sales data model: a posted counter sale stores separate fulfilled and billed quantities, and they are equal in release one.
 - [ ] Returns: a return that isn't linked to a posted sale line is rejected.
 - [ ] Ledger: a document dated before its parent is rejected unless a manager gives a backdate reason.
+- [ ] Reports: the low-stock report counts parts with no reorder point separately, so missing setup never shows as "0 low-stock parts" (found by running the study queries: only 2 of 723 item-locations had a reorder point).
 
 ## Backlog created by this study
 1. Sales orders with partial fulfillment and billing (needs reservations).

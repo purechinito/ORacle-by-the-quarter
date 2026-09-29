@@ -74,6 +74,14 @@ SELECT COUNT(*) FROM transaction WHERE type = 'PurchOrd' AND status IN ('B','D',
 SELECT COUNT(*) FROM transaction WHERE type = 'VendBill' AND status = 'D';
 ```
 
+### Results (run 2026-09-29)
+| Question | Count |
+|---|---|
+| Purchase orders waiting on goods (B, D, E) | 34 |
+| Bills awaiting approval (D) | 4 |
+
+**How to read it:** 34 open POs means 34 deliveries the warehouse should expect. That's the "purchases outstanding" report in our spec. The 4 bills in approval show the approval step is really used, not just switched on.
+
 ## Quiz yourself
 1. All goods arrived but there's no supplier bill yet. What PO status?
 2. Name the three documents in a three-way match.

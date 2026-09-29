@@ -89,15 +89,29 @@ The status is basically **derived** from `quantity`, `quantityshiprecv` and `qua
 
 ## Try it (SuiteQL)
 ```sql
--- Where are open orders stuck?
-SELECT BUILTIN.DF(status) AS status, COUNT(*) AS n
+-- Where are open orders stuck? (BUILTIN.DF can't be used with GROUP BY, so read the letters with the table above)
+SELECT status, COUNT(*) AS n
 FROM transaction WHERE type = 'SalesOrd' AND status IN ('A','B','D','E','F')
-GROUP BY status;
+GROUP BY status ORDER BY status;
 
 -- Lines shipped but not billed
 SELECT COUNT(*) FROM transactionline tl JOIN transaction t ON t.id = tl.transaction
 WHERE t.type = 'SalesOrd' AND tl.mainline = 'F' AND tl.quantityshiprecv > tl.quantitybilled;
 ```
+
+### Results (run 2026-09-29)
+| Status | Open orders |
+|---|---|
+| A Pending approval | 3 |
+| B Pending fulfillment | 44 |
+| D Partially fulfilled | 13 |
+| E Pending billing / partially fulfilled | 1 |
+| F Pending billing | 21 |
+| **Total open** | **82** |
+
+Order lines shipped but not yet billed: **33**.
+
+**How to read it:** most open orders are waiting on the *warehouse* (B and D, 57 orders), not on billing. The 21 orders in F are shipped goods that haven't been invoiced yet, which is money the business is waiting to bill. A daily "shipped, not billed" check catches this.
 
 ## Quiz yourself
 1. What's the difference between a sales order and a cash sale?

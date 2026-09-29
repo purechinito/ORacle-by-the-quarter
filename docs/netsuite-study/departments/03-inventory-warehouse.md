@@ -69,6 +69,24 @@ WHERE reorderpoint IS NOT NULL AND quantityavailable <= reorderpoint;
 SELECT type, COUNT(*) FROM transaction WHERE type IN ('ItemRcpt','InvAdjst','InvCount') GROUP BY type;
 ```
 
+### Results (run 2026-09-29)
+| Question | Result |
+|---|---|
+| Item-location rows at or below reorder point | **0** |
+| Item-location rows in total | 723 |
+| …with a reorder point set | **2** |
+| …with zero or less available | 596 (82%) |
+| Item receipts | 1,504 |
+| Inventory adjustments | 17 (about 1.1% of receipts) |
+| Inventory counts | 7 |
+
+**The big lesson: a zero can lie.** The low-stock query returned 0, but not because stock is healthy. 82% of item-locations have nothing available, and only 2 of 723 have a reorder point set. The report was blank because the **setup data was missing**.
+
+For our ERP:
+- Show "reorder point not set" as its own count on the low-stock report, so a missing setting never looks like "all good".
+- The catalog import should flag parts without a reorder point.
+- Adjustments are about 1% of receipts, which suggests corrections are rare and controlled. Track that ratio in our movements report as a health signal.
+
 ## Quiz yourself
 1. What's the difference between on hand and available?
 2. A transfer order is shipped but not received. Where is the stock?

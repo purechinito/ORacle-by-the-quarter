@@ -100,6 +100,23 @@ GROUP BY p.type, t.type;
 ```
 Gotchas: concatenate with `||`, no `WITH` (CTE) support, `BUILTIN.DF()` doesn't work inside `GROUP BY`, and large tables need paging.
 
+### Results (run 2026-09-29): document chains
+| Parent → child | Documents |
+|---|---|
+| Sales order → fulfillment | 2,205 |
+| Sales order → invoice | 2,168 |
+| Bill → bill payment | 1,684 |
+| Purchase order → item receipt | 1,480 |
+| Purchase order → bill | 1,463 |
+| Sales order → return authorization | 19 |
+| Sales order → purchase order (special order) | 19 |
+| Transfer order → shipment / receipt | 20 / 14 |
+| Return authorization → receipt / credit memo / cash refund | 10 / 4 / 1 |
+| Purchase order → vendor return | 8 |
+| Vendor return → shipment / bill credit | 6 / 3 |
+
+**How to read it:** the five big rows are the business's main paths (sell, ship, bill; buy, receive, bill, pay). Everything under about 20 is an exception path. Build the main paths first and make them excellent.
+
 ## Quiz yourself
 1. Which table holds one row per document, and which holds one row per line?
 2. Does status `B` mean the same thing on a sales order and on an invoice?
