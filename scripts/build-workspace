@@ -18,6 +18,7 @@ context = Path(tempfile.mkdtemp(prefix="workspace-build-", dir=root / ".runtime"
 shutil.copytree(root / "apps/quarter_erp", context / "apps/quarter_erp", dirs_exist_ok=True,
                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 shutil.copyfile(root / "infra/Dockerfile", context / "Dockerfile")
+shutil.copyfile(root / "infra/configure-local-proxy.py", context / "configure-local-proxy.py")
 # Cache-bust immutable static files without embedding any runtime credentials.
 page = context / "apps/quarter_erp/quarter_erp/www/orbit.html"
 html = page.read_text()

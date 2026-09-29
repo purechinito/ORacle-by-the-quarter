@@ -40,3 +40,13 @@ Watched permission tests fail before the custom app existed. First deployment ex
 Browser evidence so far: real sales/purchase records and progress visible; search produces an empty state and clears correctly; customer invoice shows Paid and zero outstanding. Service replacement interrupted a request, prompting a bounded request timeout and visible retry path.
 
 Expanded suite: 14 passing checks after adding actual pagination records and literal-wildcard search. A duplicate customer PO validation correctly rejected the initial pagination fixture; gave each temporary draft a distinct PO reference and retained the upstream rule. Browser mobile width is 390/390 with table-contained scrolling. Native invoice drill-through succeeds. Stopped/restarted the backend and verified error → Retry → restored live records. Screenshots are in docs/verification. Native socket.io origin mismatch was observed and is explicitly pending in workspace-verification.md.
+
+### Continuation: realtime connection diagnosis
+
+Previous goal turn was progress: committed the connected workspace as `268d4ab`. Runtime inspection confirmed the services running on the custom image.
+
+The pinned upstream proxy rewrote Origin to http://frontend while keeping the external Host. Frappe realtime rejects this mismatch, and uses Origin for its server-side authentication callback. Added a real Engine.IO/Socket.IO session test: failed with Invalid origin before the fix. Added unrelated-origin rejection coverage, then patched only the pinned proxy socket location to validate incoming origins before supplying matching internal Host/Origin at frontend:8080. Native session validation remains unchanged.
+
+Source inspection and Chrome then exposed the browser's initial same-origin polling request, which omits Origin. A separate failing test captured its 403. The local proxy now also accepts missing Origin only with same-origin Fetch Metadata and the exact supported loopback host:port; missing evidence and unrelated origins stay denied. This is local-only configuration, not a general production proxy template.
+
+Realtime result: all 19 integration checks pass in `.runtime/realtime-final.log`. Published a local Administrator-only connection-check event through the backend and observed the exact message in a Chrome dialog, then dismissed it and restored the workspace. Screenshot saved. Proxy build script runs with build-time root to edit the root-owned template, then returns to the original frappe runtime user. Full goal remains active; no parity requirement is closed by this infrastructure fix.
