@@ -1,5 +1,13 @@
 # Implementation ledger
 
+## 2026-09-29 — migration preview
+
+- User approved the manufacturing expansion design and explicitly said to start building. Implementing its first migration-preview slice inline; later subsystems remain pending.
+- Ruling: reuse the clean dedicated CLONE ORACLE checkout on `codex/public-erp-references` because its active local runtime/build scripts depend on it; no new checkout or production deployment is needed.
+- Plan: `docs/superpowers/plans/2026-09-29-migration-preview.md`. Parser → authorized endpoint → wizard share the documented JSON contract. Preview is intentionally non-persisting; no import command is exposed.
+- Task 1: nine pure-parser tests first failed for the absent module, then all passed. Checks include multiline CSV, leading zeros, limits, duplicates, mappings, boolean validation and full counts with bounded issue output.
+- Task 2: six database-backed preview tests first failed for the absent endpoint module. Authorization and reference checks now under implementation.
+
 ## 2026-09-29 — foundation execution
 
 - User approved ERPNext/Frappe foundation and explicitly directed implementation; reported NetSuite unblocked.
