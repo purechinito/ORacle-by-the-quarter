@@ -83,7 +83,6 @@ export function Counter({
   }
   return (
     <>
-      <Notice>{error}</Notice>
       {checkout.current.pending && (
         <Notice>
           The previous posting result is uncertain. Retry the same sale to
@@ -317,6 +316,8 @@ export function Counter({
                 </select>
               </Field>
             </div>
+            {/* Shown beside the checkout button so a failed sale is noticed where the cashier is looking. */}
+            <Notice>{error}</Notice>
             <button
               className="primary wide"
               disabled={busy || (!lines.length && !checkout.current.pending)}
