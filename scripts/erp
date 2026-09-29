@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""Operate only this project's local ERP. Stop preserves all database volumes."""
+import argparse
+import json
+import os
+from pathlib import Path
+import secrets
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+RUNTIME = ROOT / ".runtime"
+LIMA = RUNTIME / "tools/bin/limactl"
+INSTANCE = "clone-oracle"
+ENV = dict(os.environ, LIMA_HOME=str(Path.home() / ".local/share/clone-oracle/lima"))
+
+
+def run(args, capture=False, input_data=None):
+    stream = {"input": input_data} if input_data is not None else {"stdin": subprocess.DEVNULL}
+    return subprocess.run([str(x) for x in args], env=ENV, check=True,
+                          text=True, stdout=subprocess.PIPE if capture else None, **stream)
+
+
+def initialize():
+    RUNTIME.mkdir(mode=0o700, exist_ok=True)
+    path = RUNTIME / "engine.env"
+    if path.exists():
+        path.chmod(0o600)
+        return
+    versions = json.loads((ROOT / "infra/versions.json").read_text())["images"]
+    values = {
+        "ERPNEXT_IMAGE": "frappe/erpnext@" + versions["frappe/erpnext"]["digest"],
+        "MARIADB_IMAGE": "mariadb@" + versions["library/mariadb"]["digest"],
+        "REDIS_IMAGE": "redis@" + versions["library/redis"]["digest"],
+        "DB_PASSWORD": secrets.token_urlsafe(32),
+        "ERP_ADMIN_PASSWORD": secrets.token_urlsafe(24),
+    }
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as stream:
+        stream.write("".join(key + "=" + value + "\n" for key, value in values.items()))
+    print("Created local credentials in .runtime/engine.env (mode 0600).")
+
+
+def guest(*args, capture=False, input_data=None):
+    return run([LIMA, "shell", "--workdir", "/", INSTANCE, *args], capture=capture, input_data=input_data)
+
+
+def compose(*args, sync=False, input_data=None):
+    home = guest("printenv", "HOME", capture=True).stdout.strip()
+    if not home.startswith("/home/") or "\n" in home:
+        raise SystemExit("Unexpected guest home; refusing to operate.")
+    directory = home + "/clone-oracle"
+    if sync:
+        guest("mkdir", "-p", directory)
+        guest("chmod", "700", directory)
+        run([LIMA, "copy", ROOT / "infra/compose.yaml", INSTANCE + ":" + directory + "/compose.yaml"])
+        run([LIMA, "copy", RUNTIME / "engine.env", INSTANCE + ":" + directory + "/.env"])
+        guest("chmod", "600", directory + "/.env")
+    return guest("docker", "compose", "--project-directory", directory, *args, input_data=input_data)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=["init", "start", "status", "stop", "logs", "backup", "exec"])
+    parser.add_argument("arguments", nargs=argparse.REMAINDER)
+    options = parser.parse_args()
+    command_input = sys.stdin.read() if options.action == "exec" and not sys.stdin.isatty() else None
+    initialize()
+    if options.action == "init":
+        return
+    if not LIMA.exists():
+        run([sys.executable, ROOT / "scripts/bootstrap-runtime.py"])
+    if options.action == "start":
+        instances = [json.loads(line) for line in run([LIMA, "list", "--json"], capture=True).stdout.splitlines() if line.strip()]
+        if any(instance["name"] == INSTANCE for instance in instances):
+            run([LIMA, "start", "--tty=false", INSTANCE])
+        else:
+            run([LIMA, "start", "--name=" + INSTANCE, "--mount-none", "--tty=false", ROOT / "infra/lima.yaml"])
+        compose("up", "-d", sync=True)
+    elif options.action == "status":
+        run([LIMA, "list", INSTANCE])
+        compose("ps", "-a")
+    elif options.action == "stop":
+        compose("stop")
+        run([LIMA, "stop", INSTANCE])
+    elif options.action == "logs":
+        compose("logs", "--tail", "80", *options.arguments)
+    elif options.action == "backup":
+        compose("exec", "-T", "backend", "bench", "--site", "frontend", "backup", "--with-files")
+        home = guest("printenv", "HOME", capture=True).stdout.strip()
+        remote = home + "/clone-oracle/backups"
+        guest("mkdir", "-p", remote)
+        guest("chmod", "700", remote)
+        compose("cp", "backend:/home/frappe/frappe-bench/sites/frontend/private/backups/.", remote)
+        local = RUNTIME / "backups"
+        local.mkdir(mode=0o700, exist_ok=True)
+        run([LIMA, "copy", "-r", INSTANCE + ":" + remote + "/.", local])
+        for path in local.rglob("*"):
+            path.chmod(0o700 if path.is_dir() else 0o600)
+        print("Database and files copied to .runtime/backups on the host.")
+    elif options.action == "exec":
+        if not options.arguments:
+            parser.error("exec requires a service and command")
+        compose("exec", "-T", *options.arguments, input_data=command_input)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except subprocess.CalledProcessError as error:
+        raise SystemExit(error.returncode)

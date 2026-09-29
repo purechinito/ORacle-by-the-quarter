@@ -1,7 +1,7 @@
 # NetSuite replica: architecture and first build proposal
 
 Date: 2026-09-28; revised 2026-09-29 for the user's public-source direction.
-Status: **Proposed for review; public ERPNext source acquired for inspection, application implementation has not started.**
+Status: **ERPNext/Frappe foundation approved by the user on 2026-09-29; implementation in progress.**
 Target: a separate application in CLONE ORACLE, using the user-confirmed Inside the Suite | Products training/demo account as its behavioral reference.
 
 ## Intended outcome
@@ -164,8 +164,8 @@ Import into staging in dependency order; dry-run validation catches missing depe
 
 Private-account browser access remains blocked. No alternative URL can provide its hidden configuration, and no alternate access method is used to evade that restriction. The user's new public-reference direction is actionable: the official ERPNext source is cloned, the public NetSuite SuiteProcurement transcript is reviewed, and three sampled video screenshots are saved in the [public reference gallery](../../references/public/README.md).
 
-The local machine does not currently have the discovered ERPNext runtime prerequisites. Source acquisition is complete; no engine has been installed or served. Provisioning and native workflow verification belong at the beginning of implementation.
+The runtime is now provisioned in a local isolated VM. ERPNext/Frappe is served on loopback with synthetic company data and one tested sales journey; see [runtime verification](../../runtime-verification.md). This does not establish the custom frontend or full source-account parity.
 
-Before implementation, review this proposal's revised central choice: **ERPNext/Frappe as the independent business engine, a redesigned task-focused interface, and verified NetSuite mappings in dependency stages**, starting with the core platform and complete order-to-cash flow while preserving the full module objective. Exact role and customization discovery remains required work, not an assumed implementation shortcut.
+The user approved the central choice: **ERPNext/Frappe as the independent business engine, a redesigned task-focused interface, and verified NetSuite mappings in dependency stages**, starting with the core platform and complete order-to-cash flow while preserving the full module objective. Exact role and customization discovery remains required work, not an assumed implementation shortcut.
 
-The next artifact after design approval is a concrete implementation plan. No application architecture or first milestone is represented as user-approved merely because this document exists.
+The [implementation plan](../plans/2026-09-29-running-erp-foundation.md) records execution and acceptance; the full objective remains active until its required behavior is verified.

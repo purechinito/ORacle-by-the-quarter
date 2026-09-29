@@ -1,0 +1,21 @@
+{
+  "lima": {
+    "version": "2.2.0",
+    "darwin_arm64_sha256": "bbdef91774885a0d05f7b048c4eb89ae2bcf3a0c252ae7ca7934e63df76d93c3"
+  },
+  "frappe_docker_commit": "654c067add9d39191ac174d75525bc537c7602ce",
+  "images": {
+    "frappe/erpnext": {
+      "tag": "v16.36.1",
+      "digest": "sha256:13d6d2889b8690b2d6c69cb562d63bd2990f42df8cff92db840043ae69034fef"
+    },
+    "library/mariadb": {
+      "tag": "11.8",
+      "digest": "sha256:79d59758afc91b89b120b0a8904d637f5a3b3e1c4900f29b740d6d46c72fef68"
+    },
+    "library/redis": {
+      "tag": "6.2-alpine",
+      "digest": "sha256:b362b5dff9d14d961dc3352db4776aba6a8c53ca2661d7c74ad2c121f82cdaea"
+    }
+  }
+}

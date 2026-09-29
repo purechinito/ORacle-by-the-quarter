@@ -10,3 +10,6 @@ dist/
 coverage/
 .DS_Store
 .reference-code/
+.runtime/
+__pycache__/
+*.pyc

@@ -1,0 +1,17 @@
+# Local development VM. Official Lima 2.2.0 Docker template (Apache-2.0).
+# Start with --mount-none: no user home or unrelated host files are shared.
+base:
+  - template:docker
+vmType: vz
+cpus: 4
+memory: 4GiB
+disk: 12GiB
+mounts: []
+param:
+  containerdSnapshotter: false
+portForwards:
+  - guestPort: 8080
+    hostIP: 127.0.0.1
+    hostPort: 8080
+  - guestPortRange: [1, 65535]
+    ignore: true

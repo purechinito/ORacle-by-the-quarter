@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+"""Configure synthetic company data through validated native ERPNext operations."""
+from datetime import date
+import json
+from pathlib import Path
+import subprocess
+
+root = Path(__file__).resolve().parents[1]
+erp = str(root / "scripts/erp")
+year = date.today().year
+args = {"company_name": "Orbit Demo Company", "company_abbr": "ODC",
+        "country": "United States", "currency": "USD", "timezone": "Asia/Manila",
+        "language": "English", "fy_start_date": f"{year}-01-01", "fy_end_date": f"{year}-12-31",
+        "chart_of_accounts": "Standard", "domain": "Manufacturing",
+        "bank_account": "Operating Bank", "enable_telemetry": 0, "setup_demo": 0}
+subprocess.run([erp, "exec", "backend", "bench", "--site", "frontend", "execute",
+                "frappe.desk.page.setup_wizard.setup_wizard.setup_complete",
+                "--kwargs", json.dumps({"args": args})], check=True)
+subprocess.run([erp, "exec", "backend", "bench", "--site", "frontend", "enable-scheduler"], check=True)
+fixture = (root / "apps/quarter_erp/quarter_erp/fixtures.py").read_text()
+subprocess.run([erp, "exec", "backend", "bash", "-c", "cat > /tmp/orbit_fixtures.py"],
+               input=fixture, text=True, check=True)
+subprocess.run([erp, "exec", "backend", "bash", "-c",
+               "cd sites && /home/frappe/frappe-bench/env/bin/python /tmp/orbit_fixtures.py"], check=True)
