@@ -74,6 +74,8 @@ test("stock reports contain inventory but no sales, tender, return or transactio
   expect(report).toMatchObject({
     scope: "inventory",
     parts: 1,
+    // The active part was created without a reorder point; the inactive one is ignored.
+    noReorderPoint: 1,
     salesCount: null,
     salesTotal: null,
     paymentTotal: null,

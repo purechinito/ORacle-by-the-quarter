@@ -94,7 +94,7 @@ export async function reportsRoutes(app: FastifyInstance, pool: Pool) {
         : { count: null, total: null };
       const stats = (
         await tx.query(
-          "SELECT count(*) FILTER(WHERE active)::int AS parts,COALESCE(sum(stock),0)::int AS units,count(*) FILTER(WHERE stock<=reorder AND active)::int AS low FROM parts",
+          'SELECT count(*) FILTER(WHERE active)::int AS parts,COALESCE(sum(stock),0)::int AS units,count(*) FILTER(WHERE stock<=reorder AND active)::int AS low,count(*) FILTER(WHERE reorder=0 AND active)::int AS "noReorderPoint" FROM parts',
         )
       ).rows[0];
       const low = (

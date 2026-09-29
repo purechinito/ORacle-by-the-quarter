@@ -283,7 +283,13 @@ function Overview({
                     pesos(d.salesTotal),
                     `${d.salesCount} posted sales · ${d.range.from} PHT`,
                   ],
-              ["Needs restocking", d.low, "parts at or below reorder point"],
+              [
+                "Needs restocking",
+                d.low,
+                d.noReorderPoint
+                  ? `at or below reorder point · ${d.noReorderPoint} parts have no reorder point set`
+                  : "parts at or below reorder point",
+              ],
             ].map(([label, value, note]) => (
               <article className="stat" key={label}>
                 <span>{label}</span>
