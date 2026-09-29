@@ -33,6 +33,7 @@ The browser walkthrough covers these steps from `docs/PILOT.md`:
 | No signal when parts have **no reorder point** (the NetSuite study found only 2 of 723 item-locations had one) | A low-stock count can look fine while the setup is simply missing | The overview now says "N parts have no reorder point set" |
 
 ### Still not verified
+- Phone width (390 px) was spot-checked: overview and counter screens fit with no sideways page scroll. But the sales-history table clips its action buttons, and the cart sits below the part list, so run the counter on a PC or tablet during the pilot.
 - A real barcode scanner (the test types the code and presses Enter, which is how most USB scanners behave), receipt printers, phones and tablets, and screen readers.
 - Real catalog data, and a backup restored onto a separate server.
 
