@@ -11,7 +11,7 @@ import uuid
 from decimal import Decimal, InvalidOperation
 
 import frappe
-from frappe.utils import get_datetime, getdate, now_datetime
+from frappe.utils import get_datetime, getdate, now_datetime, today
 from quarter_erp.api import require_user
 
 
@@ -67,6 +67,28 @@ def session_context():
     require_user()
     from frappe.sessions import get_csrf_token
     return {"csrf_token":get_csrf_token()}
+
+
+@frappe.whitelist(methods=["GET"])
+def sales_draft_links(company, kind, search=""):
+    require_user()
+    visible_link("Company", company)
+    if not frappe.has_permission("Sales Order", "create"):
+        frappe.throw("You cannot create sales orders.", frappe.PermissionError)
+    choices = {
+        "customer": ("Customer", {"disabled":0}),
+        "item": ("Item", {"disabled":0, "is_sales_item":1}),
+        "warehouse": ("Warehouse", {"company":company, "disabled":0, "is_group":0}),
+    }
+    if kind not in choices:
+        frappe.throw("Unknown sales draft field.")
+    doctype, filters = choices[kind]
+    query = str(search or "").strip()[:120]
+    if query:
+        filters["name"] = ["like", "%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"]
+    names = frappe.get_list(doctype, filters=filters, pluck="name", order_by="name", limit=21)
+    return {"names":names[:20], "has_more":len(names)>20, "today":today(),
+            "currency":frappe.get_cached_value("Company", company, "default_currency")}
 
 
 @frappe.whitelist(methods=["POST"])

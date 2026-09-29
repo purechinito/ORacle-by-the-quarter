@@ -91,7 +91,7 @@ Task 3 progress: connected React workspace and read-only permission API shipped 
 - [ ] Verify full browser journey and database effects after refresh/restart; measure actual response times.
 - [ ] Commit tested flow with scope-specific coverage status.
 
-Task 4 progress: native-backed sales draft save commands and atomic retry receipts pass eight command cases and two real HTTP cases, including concurrent duplicate retries. The custom form and downstream posting actions remain pending. See `docs/draft-command-verification.md`.
+Task 4 progress: native-backed sales draft save commands and atomic retry receipts pass nine command/lookup cases and two real HTTP cases, including concurrent duplicate retries. The custom creation form passed browser validation, persisted save and reload, mobile containment, and recovery after losing a successful response. Existing-order custom editing and downstream posting actions remain pending. See `docs/draft-command-verification.md`.
 
 ### Task 5: Account audit and remaining parity modules
 

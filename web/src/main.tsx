@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
 import { TransactionDetails } from './TransactionDetails';
+import { SalesDraft, hasPendingSales } from './SalesDraft';
 
 type Section = 'sales' | 'purchasing' | 'receivables' | 'payables';
 type RecordRow = {name: string; status: string; docstatus: number; currency: string; grand_total: number; modified: string; per_billed?: number; per_delivered?: number; per_received?: number; outstanding_amount?: number; [key: string]: string | number | undefined};
-type Workspace = {user: {name: string; full_name: string}; companies: {name: string; default_currency: string}[]; company: string; section: Section; available_sections: Section[]; doctype: string; party_field: string; date_field: string; records: RecordRow[]; page: number; has_more: boolean};
+type Workspace = {can_create_sales: boolean; user: {name: string; full_name: string}; companies: {name: string; default_currency: string}[]; company: string; section: Section; available_sections: Section[]; doctype: string; party_field: string; date_field: string; records: RecordRow[]; page: number; has_more: boolean};
 const sections: Record<Section, {label: string; singular: string; route: string; icon: string; description: string}> = {
   sales: {label: 'Sales', singular: 'Sales order', route: 'sales-order', icon: '↗', description: 'Orders, delivery progress, and the next customer handoff.'},
   purchasing: {label: 'Purchasing', singular: 'Purchase order', route: 'purchase-order', icon: '↙', description: 'Supplier commitments, incoming stock, and billing progress.'},
@@ -21,6 +22,7 @@ function App() {
   const [section,setSection] = useState<Section>(sections[initialSection] ? initialSection : 'sales');
   const [company,setCompany] = useState(params.get('company') || '');
   const [detail,setDetail] = useState(params.get('record') || '');
+  const [creating,setCreating] = useState(false);
   const [search,setSearch] = useState('');
   const [query,setQuery] = useState('');
   const [openOnly,setOpenOnly] = useState(false);
@@ -51,11 +53,13 @@ function App() {
     return () => {active = false;clearTimeout(timeout);controller.abort();};
   },[section,company,query,page,openOnly,revision]);
   useEffect(()=>{const state = new URLSearchParams({section,company:company || data?.company || ''});if(detail)state.set('record',detail);history.replaceState(null,'','/orbit?'+state);},[section,company,data?.company,detail]);
+  useEffect(()=>{if(data && hasPendingSales(data.user.name,data.company))setCreating(true);},[data]);
   const config = sections[section];
   const record = data?.records.find(row => row.name === selected);
   function changeSection(next: Section) {setDetail('');setSection(next);setPage(0);setSearch('');setQuery('');}
   const native = (name: string) => '/desk/'+config.route+'/'+encodeURIComponent(name);
   const user = data?.user.full_name || 'Company workspace';
+  if(creating && data)return <SalesDraft company={data.company} user={data.user.name} currency={data.companies.find(item=>item.name===data.company)?.default_currency || ''} onCancel={()=>setCreating(false)} onSaved={name=>{setCreating(false);changeSection('sales');setDetail(name);setRevision(n=>n+1);}}/>;
   return <div className="app">
     <a className="skip" href="#main">Skip to records</a>
     <aside className="sidebar">
@@ -70,7 +74,7 @@ function App() {
     <div className="workspace">
       <header className="topbar"><div className="breadcrumb">Workspace <span>/</span> <strong>{config.label}</strong></div><div className="company"><label htmlFor="company">COMPANY</label><select id="company" value={company || data?.company || ''} onChange={e => {setDetail('');setCompany(e.target.value);setPage(0);}} disabled={!data || busy}>{data?.companies.map(item => <option key={item.name}>{item.name}</option>)}</select></div><a className="account-link" href="/me">Account ↗</a></header>
       <main id="main" tabIndex={-1}>
-        {!detail && <div className="heading"><div><div className="eyebrow">YOUR OPERATIONS, CONNECTED</div><h1>{config.label} workspace<span>.</span></h1><p>{config.description}</p></div><button className="refresh" disabled={busy} onClick={() => setRevision(n=>n+1)}><span aria-hidden="true">↻</span> {busy?'Refreshing…':'Refresh'}</button></div>}
+        {!detail && <div className="heading"><div><div className="eyebrow">YOUR OPERATIONS, CONNECTED</div><h1>{config.label} workspace<span>.</span></h1><p>{config.description}</p></div><div className="heading-actions">{section==='sales' && data?.can_create_sales && <button className="primary" disabled={busy} onClick={()=>setCreating(true)}>＋ New sales order</button>}<button className="refresh" disabled={busy} onClick={() => setRevision(n=>n+1)}><span aria-hidden="true">↻</span> {busy?'Refreshing…':'Refresh'}</button></div></div>}
         {data?.company === 'Orbit Demo Company' && <div className="demo-note"><span className="demo-dot"/> Synthetic demo company <span className="demo-separator">/</span> Saved transactions in the live ERP. Account migration is pending.</div>}
         {detail ? <TransactionDetails key={section+detail+revision} section={section} name={detail} company={company || data?.company || ''} onBack={()=>setDetail('')} onNavigate={(next,name)=>{changeSection(next);setDetail(name);}}/> : <div className="work-area" aria-busy={busy}>
           <section className="records-panel" aria-label={config.label+' records'}>

@@ -31,6 +31,21 @@ class DraftCommands(unittest.TestCase):
             save_sales_draft(self.key, self.payload)
         self.assertEqual(frappe.get_doc("Sales Order", doc.name).grand_total, 50)
 
+    def test_draft_link_search_is_scoped_and_literal(self):
+        from quarter_erp.commands import sales_draft_links
+        company = self.payload["company"]
+        self.assertIn("Orbit Demo Customer", sales_draft_links(company, "customer", "Orbit")["names"])
+        self.assertIn("ORBIT-DEMO-BEARING", sales_draft_links(company, "item", "BEARING")["names"])
+        self.assertIn("Stores - ODC", sales_draft_links(company, "warehouse", "Stores")["names"])
+        self.assertEqual(sales_draft_links(company, "item", "%")["names"], [])
+        with self.assertRaises(frappe.PermissionError):
+            sales_draft_links("Unavailable company", "item", "")
+        with self.assertRaises(frappe.ValidationError):
+            sales_draft_links(company, "User", "")
+        frappe.set_user("Guest")
+        with self.assertRaises(frappe.PermissionError):
+            sales_draft_links(company, "customer", "")
+
     def test_update_preserves_line_identity_and_rejects_stale_version(self):
         from quarter_erp.commands import save_sales_draft
         first = save_sales_draft(self.key, self.payload)

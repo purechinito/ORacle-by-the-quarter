@@ -62,6 +62,7 @@ def workspace(company=None, section="sales", search="", page=0, open_only="0"):
         "user": {"name": user, "full_name": frappe.get_cached_value("User", user, "full_name")},
         "companies": companies, "company": company,
         "section": section, "available_sections": available_sections,
+        "can_create_sales": frappe.has_permission("Sales Order", "create"),
         "doctype": doctype, "party_field": party_field, "date_field": date_field,
         "records": records[:PAGE_SIZE], "page": page, "has_more": has_more,
     }

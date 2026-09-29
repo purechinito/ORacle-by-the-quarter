@@ -4,6 +4,8 @@ Date: 2026-09-28; revised 2026-09-29 for the user's public-source direction.
 Status: **ERPNext/Frappe foundation approved by the user on 2026-09-29; implementation in progress.**
 Target: a separate application in CLONE ORACLE, using the user-confirmed Inside the Suite | Products training/demo account as its behavioral reference.
 
+2026-09-29 clarification: **NetSuite Next is the primary product and interaction reference.** Preserve the training-account functionality, data, users and all 83 role definitions. [Current Next research](../../research/netsuite-next-reference.md) distinguishes documented Next behavior from unverified account configuration and visual details. Modernizing the interface does not reduce the original functional scope.
+
 ## Intended outcome
 
 The user wants the account's functions, users, roles, and complete business journeys reproduced, with a much easier, attractive, reliable interface. The user explicitly requested screenshots, competitive ERP research, and inspection of every layer of all roles. Functional correctness is the primary requirement; appearance, usability, responsiveness, and stability are also essential. The latest instruction explicitly authorizes public videos, documentation, and GitHub/open-source references as a way to continue without private-account browsing.

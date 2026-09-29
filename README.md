@@ -1,8 +1,10 @@
 # CLONE ORACLE
 
-A separate ERP project intended to reproduce the confirmed NetSuite training account's business behavior with an improved interface.
+A separate ERP project intended to reproduce the confirmed NetSuite training account's business behavior, using NetSuite Next as the primary interface and workflow reference.
 
 **Current state: ERPNext 16.36.1 / Frappe 16.35.0 is running locally with a synthetic demo company, verified sales and purchasing journeys, and a React workspace with line-item details and linked transactions for sales, purchasing, receivables and payables. Full NetSuite account parity and redesigned transaction editing are still in progress.**
+
+The Sales workspace now creates real sales-order drafts with permission-filtered customer/item/warehouse choices, native validation and ERP-calculated totals. An interrupted save retains its command in the current tab's session for an identical retry. Advanced fields, existing-order editing and submission still use the full ERP. See [draft verification](docs/draft-command-verification.md) for limitations and evidence.
 
 ## Run locally
 
@@ -31,6 +33,7 @@ The user confirmed that this is separate from Quarter ERP and that the target is
 - [Account audit](docs/research/account-audit.md)
 - [Functional parity matrix](docs/research/parity-matrix.csv)
 - [NetSuite capabilities and AI research](docs/research/netsuite-capabilities.md)
+- [NetSuite Next navigation, assistant and visual references](docs/research/netsuite-next-reference.md)
 - [ERP usability research](docs/research/erp-ux-patterns.md)
 - [Proposed workspace design](docs/design/workspace-concept.md)
 - [Public NetSuite video screenshots](docs/references/public/README.md)
