@@ -70,6 +70,12 @@ class RunningEngine(unittest.TestCase):
         with urllib.request.urlopen(BASE + "/orbit", timeout=15) as response:
             self.assertIn("/login", response.url)
 
+    def test_guest_record_link_survives_login_redirect(self):
+        target = "/orbit?" + urllib.parse.urlencode({"section": "sales", "company": "Orbit Demo Company", "record": "SAL-ORD-2026-00001"})
+        with urllib.request.urlopen(BASE + target, timeout=15) as response:
+            destination = urllib.parse.parse_qs(urllib.parse.urlparse(response.url).query)["redirect-to"][0]
+            self.assertEqual(destination, target)
+
     def test_guest_cannot_read_company_records(self):
         with self.assertRaises(urllib.error.HTTPError) as failure:
             urllib.request.urlopen(BASE + "/api/resource/Company", timeout=15)

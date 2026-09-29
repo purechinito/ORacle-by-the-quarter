@@ -65,3 +65,67 @@ def workspace(company=None, section="sales", search="", page=0, open_only="0"):
         "doctype": doctype, "party_field": party_field, "date_field": date_field,
         "records": records[:PAGE_SIZE], "page": page, "has_more": has_more,
     }
+
+
+def related_group(doctype, company, filters):
+    """Query parent documents so native role/user restrictions apply to every link."""
+    group = {"doctype": doctype, "records": [], "has_more": False, "access": "available"}
+    if not frappe.has_permission(doctype, "read"):
+        group["access"] = "restricted"
+        return group
+    try:
+        rows = frappe.get_list(
+            doctype, filters=[[doctype, "company", "=", company], *filters],
+            fields=["name", "status", "docstatus", "modified"],
+            distinct=True, order_by="modified desc, name desc", limit=51,
+        )
+    except frappe.PermissionError:
+        group["access"] = "restricted"
+        return group
+    group["records"] = rows[:50]
+    group["has_more"] = len(rows) > 50
+    return group
+
+
+@frappe.whitelist(methods=["GET"])
+def transaction(section, name, company):
+    require_user()
+    if section not in SECTIONS:
+        frappe.throw(_("Unknown workspace section."))
+    if not frappe.get_list("Company", filters={"name": company}, pluck="name", limit=1):
+        frappe.throw(_("You do not have access to this company."), frappe.PermissionError)
+    doctype, party_field, date_field = SECTIONS[section]
+    # Authorize using the same filtered list path before loading child rows.
+    visible = frappe.get_list(doctype, filters={"name": name, "company": company}, pluck="name", limit=1)
+    if not visible:
+        frappe.throw(_("This record is unavailable in your current company and permissions."), frappe.PermissionError)
+    doc = frappe.get_doc(doctype, name)
+    doc.check_permission("read")
+    doc.apply_fieldlevel_read_permissions()
+    header_fields = ["name", "company", party_field, date_field, "status", "docstatus", "currency",
+                     "transaction_date", "posting_date", "modified", "net_total", "discount_amount",
+                     "total_taxes_and_charges", "grand_total", "rounding_adjustment", "rounded_total",
+                     "disable_rounded_total", "outstanding_amount", "per_billed", "per_delivered", "per_received"]
+    item_fields = ["name", "idx", "item_code", "item_name", "qty", "uom", "rate", "amount", "net_amount",
+                   "warehouse", "delivery_date", "schedule_date", "delivered_qty", "received_qty", "billed_amt"]
+    items = doc.get("items") or []
+    document = {field: doc.get(field) for field in header_fields if field in doc.__dict__}
+    related = []
+    if section == "sales":
+        related.append(related_group("Delivery Note", company, [["Delivery Note Item", "against_sales_order", "=", name]]))
+        related.append(related_group("Sales Invoice", company, [["Sales Invoice Item", "sales_order", "=", name]]))
+    elif section == "purchasing":
+        related.append(related_group("Purchase Receipt", company, [["Purchase Receipt Item", "purchase_order", "=", name]]))
+        related.append(related_group("Purchase Invoice", company, [["Purchase Invoice Item", "purchase_order", "=", name]]))
+    else:
+        mappings = [("Sales Order", "sales_order"), ("Delivery Note", "delivery_note")] if section == "receivables" else [("Purchase Order", "purchase_order"), ("Purchase Receipt", "purchase_receipt")]
+        for target_type, link_field in mappings:
+            names = sorted({item.get(link_field) for item in items if item.get(link_field)})
+            related.append(related_group(target_type, company, [["name", "in", names or [""]]]))
+        related.append(related_group("Payment Entry", company, [
+            ["Payment Entry Reference", "reference_doctype", "=", doctype],
+            ["Payment Entry Reference", "reference_name", "=", name],
+        ]))
+    return {"doctype": doctype, "section": section, "party_field": party_field, "date_field": date_field,
+            "document": document, "items": [{field: item.get(field) for field in item_fields if field in item.__dict__} for item in items],
+            "related": related}

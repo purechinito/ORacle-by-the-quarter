@@ -52,3 +52,15 @@ The upstream proxy sent an internal Origin with an external Host, which Frappe c
 First tests failed with Invalid origin. After the initial fix, a distinct browser-polling case failed with 403 and Chrome reported xhr poll error; the second fix and added regression test resolved that case. All 19 integration checks passed afterward. Finally, a test event published through `frappe.publish_realtime` to the local Administrator session appeared as a Connection check dialog in Chrome. The dialog was dismissed and the user-facing tab returned to the workspace. No business record changed.
 
 ![Observed server-to-browser delivery](verification/2026-09-29-realtime-delivery.jpg)
+
+## Transaction detail workspace
+
+Sales orders, purchase orders, customer invoices and supplier bills now have a native Orbit detail page with line quantities, rates, warehouse, totals, state and related records. Editing/posting remains explicitly linked to the full ERP. Orders/invoices navigate within Orbit; deliveries, receipts and payment entries open their native records. Related results are permission filtered, deduplicated, capped at 50 per type and labeled when more exist. A restricted related type returns no record identifiers.
+
+The suite now passes **25 checks** (10 HTTP/session/realtime, 4 business journey, 11 workspace/detail). Added tests first failed for the missing detail API, then passed. They verify actual sales/purchase item quantities and document links, invoice-to-payment references, denied detail access and a real Sales User who can read the order but receives no invoice links. Native field-level read/mask handling runs before explicit field projection; exhaustive custom field-mask combinations remain untested.
+
+A separate redirect regression test reproduced the loss of a direct transaction URL at login, then passed after retaining the known section/company/record fields in the fixed internal destination. In Chrome, direct record reload succeeded; order → invoice → payment navigation displayed the expected 10 ordered / 4 delivered, 4 invoiced at USD 25, zero invoice balance and USD 100 received. The direct link supports refresh; browser history behavior across all in-app transitions still needs a fuller navigation design.
+
+The detail viewport was tested at 390 × 844: page width remains 390 and the item table scrolls within its panel. Requests have cancellation, timeout/error recovery and refresh; primary focus moves to the record heading after navigation. This is not a full accessibility audit.
+
+![Transaction details and linked records](verification/2026-09-29-transaction-detail.jpg)

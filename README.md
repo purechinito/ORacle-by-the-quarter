@@ -2,7 +2,7 @@
 
 A separate ERP project intended to reproduce the confirmed NetSuite training account's business behavior with an improved interface.
 
-**Current state: ERPNext 16.36.1 / Frappe 16.35.0 is running locally with a synthetic demo company, verified sales and purchasing journeys, and a React workspace for sales, purchasing, receivables and payables. Full NetSuite account parity and redesigned transaction editing are still in progress.**
+**Current state: ERPNext 16.36.1 / Frappe 16.35.0 is running locally with a synthetic demo company, verified sales and purchasing journeys, and a React workspace with line-item details and linked transactions for sales, purchasing, receivables and payables. Full NetSuite account parity and redesigned transaction editing are still in progress.**
 
 ## Run locally
 

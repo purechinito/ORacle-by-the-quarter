@@ -66,6 +66,63 @@ class WorkspaceAccess(unittest.TestCase):
         invoices = workspace(company="Orbit Demo Company", section="receivables", open_only="1")
         self.assertEqual(invoices["records"], [])
 
+    def test_sales_detail_preserves_partial_quantities_and_actual_links(self):
+        from quarter_erp.api import transaction
+        result = transaction("sales", "SAL-ORD-2026-00001", "Orbit Demo Company")
+        self.assertEqual(result["document"]["grand_total"], 250)
+        self.assertEqual(result["items"][0]["qty"], 10)
+        self.assertEqual(result["items"][0]["delivered_qty"], 4)
+        groups = {group["doctype"]: group for group in result["related"]}
+        self.assertEqual(groups["Delivery Note"]["records"][0].name, "MAT-DN-2026-00001")
+        self.assertEqual(groups["Sales Invoice"]["records"][0].name, "ACC-SINV-2026-00001")
+
+    def test_invoice_detail_links_to_order_and_payment(self):
+        from quarter_erp.api import transaction
+        result = transaction("receivables", "ACC-SINV-2026-00001", "Orbit Demo Company")
+        self.assertEqual(result["document"]["outstanding_amount"], 0)
+        groups = {group["doctype"]: group for group in result["related"]}
+        self.assertEqual(groups["Sales Order"]["records"][0].name, "SAL-ORD-2026-00001")
+        self.assertEqual(groups["Payment Entry"]["records"][0].name, "ACC-PAY-2026-00001")
+
+    def test_purchase_details_link_receipts_bills_and_payments(self):
+        from quarter_erp.api import transaction
+        result = transaction("purchasing", "PUR-ORD-2026-00001", "Orbit Demo Company")
+        groups = {group["doctype"]: group for group in result["related"]}
+        self.assertEqual(groups["Purchase Receipt"]["records"][0].name, "MAT-PRE-2026-00001")
+        self.assertEqual(groups["Purchase Invoice"]["records"][0].name, "ACC-PINV-2026-00001")
+        invoice = transaction("payables", "ACC-PINV-2026-00001", "Orbit Demo Company")
+        payment = next(group for group in invoice["related"] if group["doctype"] == "Payment Entry")
+        self.assertEqual(payment["records"][0].name, "ACC-PAY-2026-00002")
+
+    def test_detail_denies_guest_invalid_company_and_unassigned_user(self):
+        from quarter_erp.api import transaction
+        with self.assertRaises(frappe.PermissionError):
+            transaction("sales", "SAL-ORD-2026-00001", "Other company")
+        frappe.set_user("Guest")
+        with self.assertRaises(frappe.PermissionError):
+            transaction("sales", "SAL-ORD-2026-00001", "Orbit Demo Company")
+
+        frappe.set_user("Administrator")
+        user = frappe.get_doc({"doctype": "User", "email": "detail-denied@example.invalid",
+                              "first_name": "Detail Denied", "send_welcome_email": 0,
+                              "user_type": "System User", "roles": [{"role": "Employee"}]}).insert()
+        frappe.set_user(user.name)
+        with self.assertRaises(frappe.PermissionError):
+            transaction("sales", "SAL-ORD-2026-00001", "Orbit Demo Company")
+
+    def test_sales_reader_does_not_receive_restricted_invoice_links(self):
+        from quarter_erp.api import transaction
+        user = frappe.get_doc({"doctype": "User", "email": "detail-sales@example.invalid",
+                              "first_name": "Sales Reader", "send_welcome_email": 0,
+                              "user_type": "System User", "roles": [{"role": "Sales User"}]}).insert()
+        frappe.set_user(user.name)
+        result = transaction("sales", "SAL-ORD-2026-00001", "Orbit Demo Company")
+        self.assertEqual(result["document"]["name"], "SAL-ORD-2026-00001")
+        invoices = next(group for group in result["related"] if group["doctype"] == "Sales Invoice")
+        self.assertEqual(invoices["access"], "restricted")
+        self.assertEqual(invoices["records"], [])
+
+
 
 if __name__ == "__main__":
     frappe.init(site="frontend", sites_path=".")
