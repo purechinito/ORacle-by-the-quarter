@@ -77,6 +77,7 @@ services:
           if ! bench --site frontend list-apps | grep -q quarter_erp; then
             bench --site frontend install-app quarter_erp
           fi
+          bench --site frontend migrate --skip-search-index
           bench --site frontend clear-cache
         fi
 

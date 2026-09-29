@@ -60,3 +60,17 @@ Five new integration cases cover real sales/purchase quantities and links, invoi
 UI uses a full-width transaction detail component with item quantities, warehouse, amounts, totals and related-record groups. Related orders/invoices stay inside Orbit; receipts/deliveries/payments and editing still open authorized native records. No lifecycle or posting action is fabricated. Applied the React best-practices review: bounded/cancelled requests, primitive effect dependencies, no cross-user data cache, field-safe rendering and focus after intentional record navigation.
 
 Final transaction-detail validation: all 25 integration checks passed in `.runtime/detail-final-tests.log`; browser verified direct-link reload, sales order → custom invoice → native payment entry, and 390px viewport containment. Saved transaction-detail screenshot and returned the tab to the custom invoice. No source account records or permissions changed. Transaction editing, atomic commands and the remainder of full parity remain pending.
+
+### Continuation: draft write boundary
+
+Previous goal turn was progress: transaction detail pages committed as `d64a794`. Added the custom command receipt DocType and native-controller draft save endpoint. Application startup now migrates installed custom schema before workers/backend start. Initial tests failed for the missing module; serial create/retry/update/stale-version/permission/input checks then passed.
+
+Real concurrent HTTP requests exposed MariaDB snapshot error 1020, followed by a missing-savepoint error that obscured it. Traced the original exception from the live server. The command now preserves database conflicts, and the HTTP boundary retries its own full transaction at most three times. A second request gets the committed receipt rather than a second order. A locking document read avoids relying on an earlier consistent-read snapshot.
+
+Ruling: restrict the first draft editor command to changes whose dependent fields are handled safely — preserve existing row data/schedules and require the native ERP for customer/header-schedule changes and in-place item substitution until their dedicated recalculation paths are implemented — cost: these edits remain outside the redesigned form temporarily, rather than silently rewriting advanced data. Full parity remains required.
+
+See docs/draft-command-verification.md for contract and test scope. No custom Save button is exposed yet.
+
+Revalidated the prior running build handle: it completed successfully with image `orbit-erp:8cd2a70c2854b245`. Ran `scripts/test-engine`; all 35 current integration checks passed in `.runtime/draft-final-suite.log`. The new append-line regression previously failed on mixed string/date values; normalization now preserves native schedule semantics and passes both append and individual-schedule cases. This is backend progress, not a completed custom drafting journey.
+
+User confirmed the foundation and explicitly named **NetSuite Next** as the continuing reference. Preserve the full original training-account functions, users and 83-role audit scope; use Oracle's current Next navigation and interaction documentation to guide subsequent custom UI work. The settings screenshot shows default browsing allowed and no visible site exception; it does not establish the cause of the earlier private-site denial. No permission bypass or source-account mutation was attempted.

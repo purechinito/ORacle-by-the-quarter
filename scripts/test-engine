@@ -7,9 +7,11 @@ import sys
 root = Path(__file__).resolve().parents[1]
 erp = str(root / "scripts/erp")
 subprocess.run([sys.executable, str(root / "tests/runtime_smoke.py")], check=True)
-for name in ["test_engine_journeys.py", "test_workspace.py"]:
+for name in ["test_engine_journeys.py", "test_workspace.py", "test_draft_commands.py"]:
     source = (root / "tests" / name).read_text()
     subprocess.run([erp, "exec", "backend", "bash", "-c", "cat > /tmp/" + name],
                    input=source, text=True, check=True)
     subprocess.run([erp, "exec", "backend", "bash", "-c",
                    "cd sites && /home/frappe/frappe-bench/env/bin/python /tmp/" + name], check=True)
+
+subprocess.run([sys.executable, str(root / "tests/test_command_http.py")], check=True)

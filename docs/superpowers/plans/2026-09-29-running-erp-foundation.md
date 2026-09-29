@@ -4,6 +4,8 @@
 
 **Goal:** Run the approved independent ERP engine locally, connect a usable company workspace, and verify complete persisted business journeys while retaining the full NetSuite replication objective.
 
+**Primary experience reference (user clarification, 2026-09-29):** NetSuite Next. The existing training account remains the source for its actual functions, users, role restrictions, data and customizations. Public Next documentation guides navigation, conversational interaction and workflow design; it does not prove account-specific configuration or replace any of the 83 role audits.
+
 **Architecture:** ERPNext/Frappe owns documents, stock, accounting, permissions, jobs and files. A custom application and React frontend provide task-oriented interaction without a second ledger. Source-account observations determine configuration and parity work.
 
 **Tech Stack:** ERPNext 16, compatible Frappe 16, MariaDB, Redis, official containers in a local Linux VM if no host container engine exists; React/TypeScript frontend.
@@ -88,6 +90,8 @@ Task 3 progress: connected React workspace and read-only permission API shipped 
 - [ ] Implement document-backed actions, draft recovery, line editing, validation summary, linked process view and visible posting/audit results.
 - [ ] Verify full browser journey and database effects after refresh/restart; measure actual response times.
 - [ ] Commit tested flow with scope-specific coverage status.
+
+Task 4 progress: native-backed sales draft save commands and atomic retry receipts pass eight command cases and two real HTTP cases, including concurrent duplicate retries. The custom form and downstream posting actions remain pending. See `docs/draft-command-verification.md`.
 
 ### Task 5: Account audit and remaining parity modules
 
