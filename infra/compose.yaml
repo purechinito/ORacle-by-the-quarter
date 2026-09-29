@@ -73,6 +73,12 @@ services:
         else
           bench new-site frontend --mariadb-user-host-login-scope='%' --db-root-username=root --db-root-password="$$DB_PASSWORD" --admin-password="$$ERP_ADMIN_PASSWORD" --install-app erpnext --set-default
         fi
+        if [ -d apps/quarter_erp ]; then
+          if ! bench --site frontend list-apps | grep -q quarter_erp; then
+            bench --site frontend install-app quarter_erp
+          fi
+          bench --site frontend clear-cache
+        fi
 
   backend:
     <<: *engine

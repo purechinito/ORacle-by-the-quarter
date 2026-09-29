@@ -13,3 +13,6 @@ coverage/
 .runtime/
 __pycache__/
 *.pyc
+
+# Rebuilt from the locked frontend dependencies by scripts/build-workspace.
+apps/quarter_erp/quarter_erp/public/workspace/

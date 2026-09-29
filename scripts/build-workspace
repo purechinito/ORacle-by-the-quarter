@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""Build the React workspace and deploy its custom app in a versioned local image."""
+import hashlib
+import json
+from pathlib import Path
+import runpy
+import shutil
+import subprocess
+import tempfile
+
+root = Path(__file__).resolve().parents[1]
+ops = runpy.run_path(str(root / "scripts/erp"))
+ops["initialize"]()
+subprocess.run(["npm", "ci", "--ignore-scripts"], cwd=root / "web", check=True)
+subprocess.run(["npm", "run", "build"], cwd=root / "web", check=True)
+# A fresh context prevents removed app files from surviving the next build.
+context = Path(tempfile.mkdtemp(prefix="workspace-build-", dir=root / ".runtime"))
+shutil.copytree(root / "apps/quarter_erp", context / "apps/quarter_erp", dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+shutil.copyfile(root / "infra/Dockerfile", context / "Dockerfile")
+# Cache-bust immutable static files without embedding any runtime credentials.
+page = context / "apps/quarter_erp/quarter_erp/www/orbit.html"
+html = page.read_text()
+for name in ["orbit.js", "orbit.css"]:
+    asset = context / "apps/quarter_erp/quarter_erp/public/workspace" / name
+    version = hashlib.sha256(asset.read_bytes()).hexdigest()[:16]
+    html = html.replace(name + '\"', name + "?v=" + version + '\"')
+page.write_text(html)
+base = "frappe/erpnext@" + json.loads((root / "infra/versions.json").read_text())["images"]["frappe/erpnext"]["digest"]
+digest = hashlib.sha256(base.encode())
+for path in sorted(context.rglob("*")):
+    if path.is_file():
+        digest.update(str(path.relative_to(context)).encode())
+        digest.update(path.read_bytes())
+tag = "orbit-erp:" + digest.hexdigest()[:16]
+guest = ops["guest"]
+home = guest("printenv", "HOME", capture=True).stdout.strip()
+remote = home + "/clone-oracle/build-" + digest.hexdigest()[:16]
+guest("mkdir", "-p", remote)
+ops["run"]([ops["LIMA"], "copy", "-r", str(context) + "/.", ops["INSTANCE"] + ":" + remote])
+guest("docker", "build", "--build-arg", "BASE_IMAGE=" + base, "-t", tag, remote)
+env = root / ".runtime/engine.env"
+lines = env.read_text().splitlines()
+env.write_text("\n".join("ERPNEXT_IMAGE=" + tag if line.startswith("ERPNEXT_IMAGE=") else line for line in lines) + "\n")
+env.chmod(0o600)
+ops["compose"]("up", "-d", sync=True)
+print("Workspace image installed: " + tag + ". Open http://127.0.0.1:8080/orbit")

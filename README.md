@@ -2,15 +2,16 @@
 
 A separate ERP project intended to reproduce the confirmed NetSuite training account's business behavior with an improved interface.
 
-**Current state: ERPNext 16.36.1 / Frappe 16.35.0 is running locally with a synthetic demo company and a verified partial sales → delivery → invoice → payment journey. The redesigned frontend and full NetSuite account parity are still in progress.**
+**Current state: ERPNext 16.36.1 / Frappe 16.35.0 is running locally with a synthetic demo company, verified sales and purchasing journeys, and a React workspace for sales, purchasing, receivables and payables. Full NetSuite account parity and redesigned transaction editing are still in progress.**
 
 ## Run locally
 
-Open **http://127.0.0.1:8080/desk**. The currently available interface is native ERPNext.
+Open **http://127.0.0.1:8080/orbit** for the company workspace. Full ERP records and remaining modules are available at **http://127.0.0.1:8080/desk** under the same login.
 
 ```sh
 scripts/erp start       # starts/reuses the project's local VM and persistent services
-scripts/setup-demo      # idempotent synthetic company and sales journey
+scripts/setup-demo      # idempotent synthetic sales and purchasing journeys
+scripts/build-workspace # builds/installs the custom app and React UI (Node 22.12+ required)
 scripts/test-engine     # real HTTP and database-backed integration checks
 scripts/erp status
 scripts/erp backup      # copies database, configuration and files to .runtime/backups

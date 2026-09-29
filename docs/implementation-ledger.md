@@ -24,3 +24,19 @@ Previous permission-advice turn was no implementation progress. Revalidated the 
 Added a real synthetic supplier/item and native purchase order → partial receipt → bill → payment fixture. Watched the new integration test fail for the missing order, then pass after fixture execution. Replay returned identical IDs. Added native over-receipt rejection and supplier-return/GL tests with transaction rollback; all 7 integration checks pass. No source account data changed, and no money was sent.
 
 Task 1 configuration and operating evidence are ready to commit. Task 2 remains partial: manufacturing, supplier credit/refund, currency/rounding and company-isolation cases remain. Full frontend, all 83 role configurations and replacement readiness are still outstanding.
+
+### Continuation: connected workspace
+
+Previous goal turn was progress: committed the running engine and purchasing tests as `41c8d59`.
+
+Ruling: implement the workspace alongside the remaining Task 2 compatibility work — the verified native sales/purchasing records now support meaningful UI work and usability is an explicit priority — costs if wrong: adapter revisions when unverified source rules are learned; do not mark Task 2 complete.
+
+Ruling: serve the React build through a custom Frappe app on the same origin rather than introduce a separate Next.js proxy — this retains the native session, CSRF boundary and native record permissions without an administrator token — costs if wrong: a later separate frontend deployment requires a reviewed session gateway.
+
+Custom image includes `quarter_erp` with authenticated, permission-filtered paginated reads. No active-role switcher is presented: underlying current-account grants apply, and exact NetSuite role isolation remains pending. Native detail links use the same session.
+
+Watched permission tests fail before the custom app existed. First deployment exposed two integration issues: upstream startup replaces sites/assets with baked assets (fixed by baking the custom app asset link); CSRF generation requires a real HTTP session and was unnecessary in a read-only workspace endpoint (removed from the read API). Production React compilation explicitly resolves NODE_ENV. Build contexts are fresh; asset URLs include content hashes.
+
+Browser evidence so far: real sales/purchase records and progress visible; search produces an empty state and clears correctly; customer invoice shows Paid and zero outstanding. Service replacement interrupted a request, prompting a bounded request timeout and visible retry path.
+
+Expanded suite: 14 passing checks after adding actual pagination records and literal-wildcard search. A duplicate customer PO validation correctly rejected the initial pagination fixture; gave each temporary draft a distinct PO reference and retained the upstream rule. Browser mobile width is 390/390 with table-contained scrolling. Native invoice drill-through succeeds. Stopped/restarted the backend and verified error → Retry → restored live records. Screenshots are in docs/verification. Native socket.io origin mismatch was observed and is explicitly pending in workspace-verification.md.

@@ -12,6 +12,13 @@ BASE = "http://127.0.0.1:8080"
 
 
 class RunningEngine(unittest.TestCase):
+    def test_guest_workspace_is_denied_and_page_redirects_to_login(self):
+        with self.assertRaises(urllib.error.HTTPError) as failure:
+            urllib.request.urlopen(BASE + "/api/method/quarter_erp.api.workspace", timeout=15)
+        self.assertIn(failure.exception.code, [401, 403])
+        with urllib.request.urlopen(BASE + "/orbit", timeout=15) as response:
+            self.assertIn("/login", response.url)
+
     def test_guest_cannot_read_company_records(self):
         with self.assertRaises(urllib.error.HTTPError) as failure:
             urllib.request.urlopen(BASE + "/api/resource/Company", timeout=15)
@@ -41,6 +48,10 @@ class RunningEngine(unittest.TestCase):
             self.assertEqual(json.load(response)["message"], "Administrator")
         with client.open(BASE + "/api/resource/Company?limit_page_length=5", timeout=15) as response:
             self.assertIsInstance(json.load(response)["data"], list)
+        with client.open(BASE + "/api/method/quarter_erp.api.workspace?section=purchasing", timeout=15) as response:
+            workspace = json.load(response)["message"]
+            self.assertEqual(workspace["company"], "Orbit Demo Company")
+            self.assertTrue(any(row["name"] == "PUR-ORD-2026-00001" for row in workspace["records"]))
 
 
 if __name__ == "__main__":

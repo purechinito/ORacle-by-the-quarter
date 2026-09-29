@@ -76,6 +76,8 @@
 - [ ] Reuse configured native engine capabilities as explicitly identified fallback only when they enforce the same permissions.
 - [ ] Verify browser sign-in, navigation, refresh, keyboard operation and denied actions; capture screenshots.
 
+Task 3 progress: connected React workspace and read-only permission API shipped for four transaction views; 14 integration checks plus browser search, native drill-through, mobile and outage recovery observed. Active-role switching, full two-company isolation tests, full custom details and keyboard coverage remain pending. See `docs/workspace-verification.md`.
+
 ### Task 4: Redesigned complete order-to-cash
 
 **Files:** sales workspace/forms/process view under `web/src/`; task commands and integration tests under custom app and `tests/`.

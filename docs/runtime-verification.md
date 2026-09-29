@@ -42,11 +42,11 @@ These are development records, not migrated NetSuite transactions. No external p
 - `scripts/erp backup` produced the database dump, public/private file archives and site configuration, then copied all four to `.runtime/backups` on the host with private file permissions.
 - Backup creation and file transfer are verified; a restore rehearsal remains pending.
 - Browser sign-in and the demo company were verified. After restart the browser opened SAL-ORD-2026-00001 with the correct customer, 10 units and USD 250 total.
-- Native ERPNext is the currently available UI. This does not claim the proposed interface redesign is delivered.
+- The React workspace is now available at `/orbit`; full record editing and remaining modules still use native ERPNext. See [workspace verification](workspace-verification.md).
 
 ## Outstanding requirements
 
-The full goal remains active. Pending work includes the custom frontend, all other workflow/exception coverage, account data migration, the 83 detailed role configurations, active-role enforcement, numeric compatibility beyond the tested scenario, broader procurement/manufacturing validation, AI integration, load testing, restoration and company release readiness.
+The full goal remains active. Pending work includes completion of the redesigned transaction frontend, all other workflow/exception coverage, account data migration, the 83 detailed role configurations, active-role enforcement, numeric compatibility beyond the tested scenario, broader procurement/manufacturing validation, AI integration, load testing, restoration and company release readiness.
 
 The user reported NetSuite unblocked, but the browser tool's fresh attempt still returned a saved permission block for `td3118036.app.netsuite.com`. No alternate access method was used. Private-account audit and exact-role parity remain pending independently of the running local engine.
 
