@@ -8,7 +8,7 @@ The catalog, stock, purchasing, counter sale and return workflows described in R
 
 ## Remaining verification and limitations
 
-- Browser preview access was denied by a saved user permission setting even after conversational authorization. Screenshots, keyboard/scanner testing, responsive visual inspection and end-to-end browser tests are **not verified**. Do not treat the frontend build as visual validation.
+- 2026-09-29: the pilot loop was verified in headless Chromium at 1280×720 (`tests/e2e/pilot-loop.spec.ts`: setup, staff, two-delivery receipt, scanner-style entry, cash change, last-unit race, restockable/damaged returns, direct API denial). Three UI/API defects found there were fixed; see [IMPLEMENTATION-READINESS.md](IMPLEMENTATION-READINESS.md). Physical scanners, printers, phones/tablets and screen readers are still **not verified**.
 - This is a single-location, whole-unit release. Currency is PHP only; monetary displays use ₱ with two decimal places. Dates and daily filters use Asia/Manila. One shop-level tax rate is supported; legal/tax invoice compliance is not certified.
 - Inventory is a ledger with a single-location balance on each part. Reservations, multi-location transfers, costing/valuation and profit reports are deferred.
 - Substitute links, manager price overrides, purchase draft editing, date/search/status filters, activity-log browsing and paginated sales/order/movement/report history are now exposed in the UI. Visual and keyboard behavior still need browser verification.
