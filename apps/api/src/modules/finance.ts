@@ -73,7 +73,7 @@ export async function financeRoutes(app: FastifyInstance, pool: Pool) {
     async () =>
       (
         await pool.query(
-          "SELECT *,starts_on::text AS starts_on,ends_on::text AS ends_on FROM gl_periods ORDER BY starts_on DESC",
+          "SELECT *,starts_on::text AS starts_on,ends_on::text AS ends_on FROM gl_periods ORDER BY gl_periods.starts_on DESC",
         )
       ).rows,
   );

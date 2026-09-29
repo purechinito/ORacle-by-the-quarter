@@ -76,6 +76,12 @@ test("chart accounts and non-overlapping fiscal periods persist as date-only PHP
   });
   expect(overlap.statusCode).toBe(409);
   expect(overlap.json().error).toMatch(/overlap/i);
+  const listed = await t.request(m, "GET", "/api/finance/periods");
+  expect(listed.statusCode).toBe(200);
+  expect(listed.json().map((row: any) => [row.name, row.starts_on])).toEqual([
+    ["October 2026", "2026-10-01"],
+    ["September 2026", "2026-09-01"],
+  ]);
   expect(
     (
       await t.request(m, "POST", "/api/finance/periods", {
