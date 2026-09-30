@@ -14,6 +14,8 @@ class BIRReview(unittest.TestCase):
     def setUp(self):
         frappe.set_user('Administrator')
         frappe.db.savepoint('bir_review_tests')
+        # Profile tests start empty without permanently removing saved UI data.
+        frappe.db.delete('Orbit Taxpayer Profile', {'company':self.company})
 
     def tearDown(self):
         frappe.set_user('Administrator')

@@ -1,5 +1,6 @@
 """Native reviewer and taxpayer-profile boundaries; fixtures are rolled back."""
 import unittest
+from unittest.mock import patch
 
 import frappe
 from frappe.utils import add_days, nowdate
@@ -12,6 +13,8 @@ class BIRAccess(unittest.TestCase):
     def setUp(self):
         frappe.set_user("Administrator")
         frappe.db.savepoint("bir_access")
+        # Isolate fixtures from a profile saved through the UI; tearDown restores it.
+        frappe.db.delete("Orbit Taxpayer Profile", {"company": self.company})
         from quarter_erp.bir_setup import ensure_bir_role
 
         ensure_bir_role()
@@ -37,6 +40,27 @@ class BIRAccess(unittest.TestCase):
         doc = frappe.get_doc({"doctype": "Orbit Taxpayer Profile", "company": self.company})
         doc.update(values)
         return doc
+
+    def test_philippine_selector_preserves_company_permissions_and_original_currency(self):
+        from quarter_erp.bir import options
+
+        first = frappe.get_doc({"doctype": "Company", "company_name": "BIR Cebu Test One",
+                               "abbr": "BCT1", "default_currency": "PHP", "country": "Philippines"}).insert()
+        second = frappe.get_doc({"doctype": "Company", "company_name": "BIR Cebu Test Two",
+                                "abbr": "BCT2", "default_currency": "PHP", "country": "Philippines"}).insert()
+        original = frappe.db.get_value("Company", self.company, ["country", "default_currency"])
+        # Only the HTTP-session token is substituted; native queries and permissions run normally.
+        with patch("quarter_erp.bir.get_csrf_token", return_value="test-without-http-session"):
+            choices = options()["companies"]
+            self.assertNotIn(self.company, {row.name for row in choices})
+            self.assertTrue({first.name, second.name}.issubset({row.name for row in choices}))
+            self.assertTrue(all(row.country == "Philippines" for row in choices))
+            user = self.reviewer()
+            frappe.get_doc({"doctype": "User Permission", "user": user, "allow": "Company",
+                            "for_value": first.name, "apply_to_all_doctypes": 1}).insert()
+            frappe.set_user(user)
+            self.assertEqual([row.name for row in options()["companies"]], [first.name])
+        self.assertEqual(frappe.db.get_value("Company", self.company, ["country", "default_currency"]), original)
 
     def test_setup_is_idempotent_and_preserves_existing_report_roles(self):
         from quarter_erp.bir_setup import ensure_bir_role

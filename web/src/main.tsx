@@ -95,4 +95,4 @@ function App() {
   </div>;
 }
 
-createRoot(document.getElementById('root')!).render(params.get('view')==='bir'?<BIRReview/>:params.get('view')==='migration'?<MigrationPreview/>:<App/>);
+createRoot(document.getElementById('root')!).render(params.get('view')==='bir' || !['view','section','record'].some(key=>params.has(key))?<BIRReview/>:params.get('view')==='migration'?<MigrationPreview/>:<App/>);

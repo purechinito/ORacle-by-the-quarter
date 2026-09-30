@@ -62,7 +62,7 @@ def authorize(company=None, exporting=False):
 @frappe.whitelist(methods=['GET'])
 def options():
     authorize()
-    return {'user':frappe.session.user,'companies':frappe.get_list('Company',fields=['name','default_currency','country'],order_by='name',limit_page_length=0),
+    return {'user':frappe.session.user,'companies':frappe.get_list('Company',filters={'country':'Philippines'},fields=['name','default_currency','country'],order_by='name',limit_page_length=0),
         'fiscal_years':frappe.get_list('Fiscal Year',filters={'disabled':0},fields=['name','year_start_date','year_end_date'],order_by='year_start_date desc',limit_page_length=100),
         'can_configure':can_configure(),'csrf_token':get_csrf_token()}
 

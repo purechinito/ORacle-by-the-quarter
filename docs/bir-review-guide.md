@@ -4,9 +4,11 @@ Open [BIR review](http://127.0.0.1:8080/orbit?view=bir) after signing in. This i
 
 ## Establish the actual company
 
+The intended business setup is now confirmed as **five Philippine VAT-registered companies with Cebu branch/RDO context**. The five legal names, exact branch/RDO registrations and source accounting system still need to be supplied. The BIR company selector shows only authorized Philippine companies; an empty selector becomes a company-setup screen. See [company setup and bookkeeping scope](philippine-company-setup.md).
+
 The existing **Orbit Demo Company** contains synthetic US/USD transactions. Keep them as test evidence. Do not change the currency of its posted ledger or relabel those amounts as pesos.
 
-Create the actual legal entity in native Company setup after confirming its registered name, Philippines jurisdiction, accounting currency, branches, chart of accounts and fiscal year with the responsible accountant. PHP is the expected starting configuration here; any permitted functional-currency exception needs specific review. Reconcile imported opening balances and subledgers before actual use. This release does not perform that migration.
+Create each actual legal entity in native Company setup after confirming its registered name, Philippines jurisdiction, accounting currency, branches, chart of accounts and fiscal year with the responsible accountant. PHP is the expected starting configuration here; any permitted functional-currency exception needs specific review. The bookkeeper's company assignment must follow the transaction evidence before posting, with ambiguous cases held for review. Reconcile imported opening balances and subledgers before actual use. This release does not perform that migration or implement an intake/assignment queue.
 
 ## Prepare and inspect a review
 

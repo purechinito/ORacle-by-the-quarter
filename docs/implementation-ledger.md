@@ -1,5 +1,14 @@
 # Implementation ledger
 
+## 2026-09-30 — Philippine VAT company context
+
+- User clarified five VAT-registered Philippine companies, Cebu branch/RDO context, and bookkeeper-prepared company assignment. Recorded the confirmed context and remaining identities/source-of-truth questions in `docs/philippine-company-setup.md`.
+- Bounded localization: `/orbit` now opens Philippine VAT accounting. Explicit sales/record/migration routes are preserved. The BIR selector queries only native permission-filtered Philippine companies. With none configured, it shows five-entity setup guidance, native Company setup and refresh, without unusable report filters.
+- This selector is product relevance, not an additional security boundary. Historical diagnostic endpoints retain existing authorization and non-Philippine readiness warnings. No record suppression/receipt-only subset, reassignment command, legal entity, tax identity, user grant or currency conversion was introduced.
+- New native selector regression failed for inclusion of the US demo, then passed after the filter. Existing BIR fixtures failed after a profile had been saved through the UI; isolated profile fixtures within their existing rollback savepoints, preserving the actual saved note.
+- Installed image `orbit-erp:60167395f6cbd407`; build passed and all 78 tests passed. Chrome verified default accounting home, refresh, native Company setup redirect, preserved sales route, return to BIR and 390px layout without page overflow. No warning/error logs captured. Post-suite check confirmed zero persistent Philippine test companies, unchanged US/USD demo metadata, and the saved profile still present.
+- No material findings in independent review. Screenshots: `docs/verification/2026-09-30-philippine-setup.png` and `docs/verification/2026-09-30-philippine-setup-mobile.png`. Actual five-company configuration, assignment/intake and reconciled reporting-source integration remain pending legal identities and scope clarification.
+
 ## 2026-09-30 — Philippine accounting review workspace
 
 - User asked to revise the ERP for BIR readiness. Implemented accounting-review preparation within the approved manufacturing design; this release does not establish BIR registration, government approval or live taxpayer compliance. Keep one complete ledger, with missing documentation visible for accounting review.

@@ -37,7 +37,7 @@ Implementation gate: treat the adapter as disabled/unverified until official sch
 
 ## Unknown taxpayer applicability — retain as unknown
 
-The user has supplied “manufacturing”, not a verified registration profile. Obtain the real legal entity, COR, TIN/branch codes, RDO/LT jurisdiction, VAT/non-VAT status, EOPT size classification, fiscal year, branches, existing AC/PTU, invoice series/authority, e-commerce/export/incentive activities, withholding obligations, actual chart of accounts, currencies, opening balances and accountant owner. Do not fill these from the US NetSuite training account or synthetic demo company.
+The user has supplied manufacturing, five Philippine VAT-registered companies and Cebu branch/RDO context. Individual registration profiles are still unverified. Obtain each real legal name, COR, TIN/branch codes, exact RDO/LT jurisdiction, EOPT size classification, fiscal year, branches, existing AC/PTU, invoice series/authority, e-commerce/export/incentive activities, withholding obligations, actual chart of accounts, currencies, opening balances and accountant owner. Do not fill these from the US NetSuite training account or synthetic demo company. See [updated company scope](../philippine-company-setup.md).
 
 Tax returns and attachments must be selected from that verified profile. This research does not validate specific 2550Q, 1601-EQ, 2307, SLSP, QAP or SAWT generation, filing connectors, zero-rating eligibility, withholding rates or an excise-tax manufacturing regime. Those require separate taxpayer-specific configuration and current form/schema tests.
 

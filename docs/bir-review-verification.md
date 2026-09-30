@@ -1,5 +1,13 @@
 # BIR review workspace verification — 2026-09-30
 
+## Follow-up: Philippine VAT home
+
+The later localization image `orbit-erp:60167395f6cbd407` builds successfully and passes **78 tests** in `.runtime/ph-company-tests.log`. It adds a native company-selection regression covering Philippine relevance, company permissions and original currency preservation. The test failed before the filter. BIR profile fixtures now isolate saved UI data inside their rollback transaction; the original demo note remains after the suite.
+
+Chrome verified `/orbit` opens Philippine VAT accounting, no Philippine company produces five-entity setup guidance, Refresh setup works, and the observed `/app/company` link redirects successfully to native `/desk/company`. The explicit sales workspace and BIR return link remain usable. Mobile viewport/page widths are both 390px; temporary sizing was reset. No browser warning/error entries were captured. [Current desktop](verification/2026-09-30-philippine-setup.png) · [current mobile](verification/2026-09-30-philippine-setup-mobile.png).
+
+This is a localization/setup-guidance change. Five actual companies and the bookkeeper's assignment workflow have not been created. Company names, branch registrations and exact RDOs are required; the complete-ledger versus reconciled-reporting-module question remains open. The previous export browser-policy limitation and compliance boundaries below remain applicable.
+
 ## Delivered and tested
 
 Local runtime: `http://127.0.0.1:8080/orbit?view=bir`. Installed image: `orbit-erp:0682cacb4d472380`.
