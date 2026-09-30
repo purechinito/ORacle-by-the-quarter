@@ -4,10 +4,11 @@ import './style.css';
 import { TransactionDetails } from './TransactionDetails';
 import { SalesDraft, hasPendingSales } from './SalesDraft';
 import { MigrationPreview } from './MigrationPreview';
+import { BIRReview } from './BIRReview';
 
 type Section = 'sales' | 'purchasing' | 'receivables' | 'payables';
 type RecordRow = {name: string; status: string; docstatus: number; currency: string; grand_total: number; modified: string; per_billed?: number; per_delivered?: number; per_received?: number; outstanding_amount?: number; [key: string]: string | number | undefined};
-type Workspace = {can_prepare_migration: boolean; can_create_sales: boolean; user: {name: string; full_name: string}; companies: {name: string; default_currency: string}[]; company: string; section: Section; available_sections: Section[]; doctype: string; party_field: string; date_field: string; records: RecordRow[]; page: number; has_more: boolean};
+type Workspace = {can_review_accounting: boolean; can_prepare_migration: boolean; can_create_sales: boolean; user: {name: string; full_name: string}; companies: {name: string; default_currency: string}[]; company: string; section: Section; available_sections: Section[]; doctype: string; party_field: string; date_field: string; records: RecordRow[]; page: number; has_more: boolean};
 const sections: Record<Section, {label: string; singular: string; route: string; icon: string; description: string}> = {
   sales: {label: 'Sales', singular: 'Sales order', route: 'sales-order', icon: '↗', description: 'Orders, delivery progress, and the next customer handoff.'},
   purchasing: {label: 'Purchasing', singular: 'Purchase order', route: 'purchase-order', icon: '↙', description: 'Supplier commitments, incoming stock, and billing progress.'},
@@ -69,6 +70,7 @@ function App() {
       <nav aria-label="Workspace">{Object.entries(sections).filter(([key]) => !data || data.available_sections.includes(key as Section)).map(([key,value]) => <button key={key} className={section === key ? 'nav-item active':'nav-item'} aria-current={section === key ? 'page':undefined} onClick={() => changeSection(key as Section)}><span className="nav-icon" aria-hidden="true">{value.icon}</span>{value.label}<span className="nav-dot"/></button>)}</nav>
       <div className="nav-rule"/>
       {data?.can_prepare_migration && <a className="nav-item" href="/orbit?view=migration"><span className="nav-icon" aria-hidden="true">↥</span> Migration studio</a>}
+      {data?.can_review_accounting && <a className="nav-item" href="/orbit?view=bir"><span className="nav-icon" aria-hidden="true">▤</span> BIR review</a>}
       <a className="native-link" href="/desk"><span aria-hidden="true">▦</span> All ERP modules <span aria-hidden="true">↗</span></a>
       <p className="nav-help">Inventory, manufacturing, reports, and setup open in the full ERP.</p>
       <div className="sidebar-bottom"><span className="avatar">{user.slice(0,1)}</span><div><strong>{user}</strong><small>Current account permissions</small></div></div>
@@ -93,4 +95,4 @@ function App() {
   </div>;
 }
 
-createRoot(document.getElementById('root')!).render(params.get('view')==='migration'?<MigrationPreview/>:<App/>);
+createRoot(document.getElementById('root')!).render(params.get('view')==='bir'?<BIRReview/>:params.get('view')==='migration'?<MigrationPreview/>:<App/>);

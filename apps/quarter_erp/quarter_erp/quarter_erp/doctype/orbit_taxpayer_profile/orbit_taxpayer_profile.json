@@ -1,0 +1,33 @@
+{
+ "doctype": "DocType",
+ "name": "Orbit Taxpayer Profile",
+ "module": "Quarter ERP",
+ "autoname": "field:company",
+ "naming_rule": "By fieldname",
+ "engine": "InnoDB",
+ "field_order": ["company", "legal_name", "tin", "branch_code", "registered_address", "rdo_code", "vat_status", "fiscal_year_end", "cas_reference", "books_reference", "invoice_series", "accountant_name", "accountant_review_date", "registration_notes"],
+ "fields": [
+  {"fieldname": "company", "fieldtype": "Link", "options": "Company", "label": "Company", "reqd": 1, "unique": 1, "in_list_view": 1},
+  {"fieldname": "legal_name", "fieldtype": "Data", "label": "Registered legal name"},
+  {"fieldname": "tin", "fieldtype": "Data", "label": "TIN", "description": "Nine digits without separators; leave blank until confirmed."},
+  {"fieldname": "branch_code", "fieldtype": "Data", "label": "Branch code", "description": "Three or five digits, as recorded in the taxpayer's registration."},
+  {"fieldname": "registered_address", "fieldtype": "Small Text", "label": "Registered address"},
+  {"fieldname": "rdo_code", "fieldtype": "Data", "label": "RDO code", "description": "Two digits followed by a digit or uppercase letter, such as 039 or 17A."},
+  {"fieldname": "vat_status", "fieldtype": "Select", "label": "VAT status", "options": "Unconfirmed\nVAT\nNon-VAT", "default": "Unconfirmed", "reqd": 1},
+  {"fieldname": "fiscal_year_end", "fieldtype": "Data", "label": "Fiscal year end", "description": "MM-DD from the registered accounting period."},
+  {"fieldname": "cas_reference", "fieldtype": "Data", "label": "CAS registration reference"},
+  {"fieldname": "books_reference", "fieldtype": "Data", "label": "Books registration reference"},
+  {"fieldname": "invoice_series", "fieldtype": "Data", "label": "Registered invoice series"},
+  {"fieldname": "accountant_name", "fieldtype": "Data", "label": "Reviewing accountant"},
+  {"fieldname": "accountant_review_date", "fieldtype": "Date", "label": "Accountant review date"},
+  {"fieldname": "registration_notes", "fieldtype": "Long Text", "label": "Registration and review notes", "description": "Recorded facts and open questions. This profile does not certify BIR approval."}
+ ],
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "export": 1},
+  {"role": "Accounts Manager", "read": 1, "write": 1, "create": 1, "export": 1},
+  {"role": "Orbit BIR Reviewer", "read": 1, "select": 1, "export": 1}
+ ],
+ "track_changes": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

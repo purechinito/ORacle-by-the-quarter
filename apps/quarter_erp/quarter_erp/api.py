@@ -64,6 +64,7 @@ def workspace(company=None, section="sales", search="", page=0, open_only="0"):
         "section": section, "available_sections": available_sections,
         "can_create_sales": frappe.has_permission("Sales Order", "create"),
         "can_prepare_migration": user == "Administrator" or "System Manager" in frappe.get_roles(),
+        "can_review_accounting": user == "Administrator" or bool({"System Manager", "Accounts Manager", "Orbit BIR Reviewer"} & set(frappe.get_roles())),
         "doctype": doctype, "party_field": party_field, "date_field": date_field,
         "records": records[:PAGE_SIZE], "page": page, "has_more": has_more,
     }
