@@ -8,7 +8,7 @@ import { BIRReview } from './BIRReview';
 
 type Section = 'sales' | 'purchasing' | 'receivables' | 'payables';
 type RecordRow = {name: string; status: string; docstatus: number; currency: string; grand_total: number; modified: string; per_billed?: number; per_delivered?: number; per_received?: number; outstanding_amount?: number; [key: string]: string | number | undefined};
-type Workspace = {can_review_accounting: boolean; can_prepare_migration: boolean; can_create_sales: boolean; user: {name: string; full_name: string}; companies: {name: string; default_currency: string}[]; company: string; section: Section; available_sections: Section[]; doctype: string; party_field: string; date_field: string; records: RecordRow[]; page: number; has_more: boolean};
+type Workspace = {can_review_accounting: boolean; can_prepare_migration: boolean; can_create_sales: boolean; user: {name: string; full_name: string}; companies: {name: string; default_currency: string; country: string}[]; company: string; section: Section; available_sections: Section[]; doctype: string; party_field: string; date_field: string; records: RecordRow[]; page: number; has_more: boolean};
 const sections: Record<Section, {label: string; singular: string; route: string; icon: string; description: string}> = {
   sales: {label: 'Sales', singular: 'Sales order', route: 'sales-order', icon: '↗', description: 'Orders, delivery progress, and the next customer handoff.'},
   purchasing: {label: 'Purchasing', singular: 'Purchase order', route: 'purchase-order', icon: '↙', description: 'Supplier commitments, incoming stock, and billing progress.'},
@@ -17,8 +17,8 @@ const sections: Record<Section, {label: string; singular: string; route: string;
 };
 const params = new URLSearchParams(location.search);
 const initialSection = params.get('section') as Section;
-function currency(value: number, code: string) { if(typeof value !== 'number' || typeof code !== 'string' || !/^[A-Z]{3}$/.test(code)) return 'Not available'; return new Intl.NumberFormat(undefined, {style:'currency', currency:code}).format(value); }
-function date(value: unknown) { if (!value) return 'Not set'; if(Number.isNaN(new Date(String(value).slice(0,10)+'T12:00:00').valueOf())) return 'Not available'; return new Intl.DateTimeFormat(undefined, {day:'numeric',month:'short',year:'numeric'}).format(new Date(String(value).slice(0,10)+'T12:00:00')); }
+function currency(value: number, code: string) { if(typeof value !== 'number' || typeof code !== 'string' || !/^[A-Z]{3}$/.test(code)) return 'Not available'; return new Intl.NumberFormat('en-PH', {style:'currency', currency:code}).format(value); }
+function date(value: unknown) { if (!value) return 'Not set'; if(Number.isNaN(new Date(String(value).slice(0,10)+'T12:00:00').valueOf())) return 'Not available'; return new Intl.DateTimeFormat('en-PH', {day:'numeric',month:'short',year:'numeric'}).format(new Date(String(value).slice(0,10)+'T12:00:00')); }
 function Progress({label, value}: {label: string; value: number}) { return <div className="progress"><div><span>{label}</span><strong>{Math.round(value)}%</strong></div><progress aria-label={label} value={value} max={100}/></div>; }
 function App() {
   const [section,setSection] = useState<Section>(sections[initialSection] ? initialSection : 'sales');
@@ -76,10 +76,10 @@ function App() {
       <div className="sidebar-bottom"><span className="avatar">{user.slice(0,1)}</span><div><strong>{user}</strong><small>Current account permissions</small></div></div>
     </aside>
     <div className="workspace">
-      <header className="topbar"><div className="breadcrumb">Workspace <span>/</span> <strong>{config.label}</strong></div><div className="company"><label htmlFor="company">COMPANY</label><select id="company" value={company || data?.company || ''} onChange={e => {setDetail('');setCompany(e.target.value);setPage(0);}} disabled={!data || busy}>{data?.companies.map(item => <option key={item.name}>{item.name}</option>)}</select></div><a className="account-link" href="/me">Account ↗</a></header>
+      <header className="topbar"><div className="breadcrumb">Workspace <span>/</span> <strong>{config.label}</strong></div><div className="company"><label htmlFor="company">COMPANY</label><select id="company" value={company || data?.company || ''} onChange={e => {setDetail('');setCompany(e.target.value);setPage(0);}} disabled={!data || busy}>{data?.companies.map(item => <option key={item.name} value={item.name}>{item.name} · {item.default_currency}{item.country ? ` · ${item.country}` : ''}</option>)}</select></div><a className="account-link" href="/me">Account ↗</a></header>
       <main id="main" tabIndex={-1}>
         {!detail && <div className="heading"><div><div className="eyebrow">YOUR OPERATIONS, CONNECTED</div><h1>{config.label} workspace<span>.</span></h1><p>{config.description}</p></div><div className="heading-actions">{section==='sales' && data?.can_create_sales && <button className="primary" disabled={busy} onClick={()=>setCreating(true)}>＋ New sales order</button>}<button className="refresh" disabled={busy} onClick={() => setRevision(n=>n+1)}><span aria-hidden="true">↻</span> {busy?'Refreshing…':'Refresh'}</button></div></div>}
-        {data?.company === 'Orbit Demo Company' && <div className="demo-note"><span className="demo-dot"/> Synthetic demo company <span className="demo-separator">/</span> Saved transactions in the live ERP. Account migration is pending.</div>}
+        {data && ['Orbit Demo Company','Orbit Philippines Demo'].includes(data.company) && <div className="demo-note"><span className="demo-dot"/> Synthetic demo company <span className="demo-separator">/</span> Saved transactions in the live ERP. Account migration is pending.</div>}
         {detail ? <TransactionDetails key={section+detail+revision} section={section} name={detail} company={company || data?.company || ''} onBack={()=>setDetail('')} onNavigate={(next,name)=>{changeSection(next);setDetail(name);}}/> : <div className="work-area" aria-busy={busy}>
           <section className="records-panel" aria-label={config.label+' records'}>
             <div className="panel-title"><div><span className="section-number">01</span><h2>{config.singular}s</h2></div><a href={'/desk/'+config.route} className="text-link">Full list ↗</a></div>

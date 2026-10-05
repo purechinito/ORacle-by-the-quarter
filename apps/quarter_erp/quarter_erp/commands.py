@@ -190,6 +190,18 @@ def _save_sales_draft(command_key, payload, name=None, expected_modified=None):
         if name:
             doc.save()
         else:
+            if frappe.get_cached_value("Company", company, "country") == "Philippines":
+                from erpnext.accounts.party import get_party_details
+                details = get_party_details(party=doc.customer, party_type="Customer", company=company,
+                    posting_date=today(), doctype="Sales Order", currency=doc.currency)
+                doc.taxes_and_charges = details.get("taxes_and_charges")
+                doc.exempt_from_sales_tax = frappe.get_cached_value("Customer", doc.customer, "exempt_from_sales_tax")
+                if not doc.exempt_from_sales_tax:
+                    doc.taxes_and_charges = doc.taxes_and_charges or frappe.db.get_value(
+                        "Sales Taxes and Charges Template", {"company": company, "is_default": 1, "disabled": 0}, "name")
+                    # set_taxes() skips documents until insert sets __islocal.
+                    # Materialize the same native template before validation.
+                    doc.append_taxes_from_master("Sales Taxes and Charges Template")
             doc.insert()
         result = {"doctype":"Sales Order", "name":doc.name, "modified":str(doc.modified)}
         frappe.db.sql("UPDATE `tabOrbit Command` SET result_json=%s WHERE name=%s", (json.dumps(result), command_name))

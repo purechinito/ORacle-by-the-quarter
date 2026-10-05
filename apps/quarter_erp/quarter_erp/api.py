@@ -27,11 +27,20 @@ def workspace(company=None, section="sales", search="", page=0, open_only="0"):
     page = cint(page)
     if page < 0 or page > 10000:
         frappe.throw(_("Invalid page."))
-    companies = frappe.get_list("Company", fields=["name", "default_currency"], order_by="name", limit_page_length=0)
+    companies = frappe.get_list("Company", fields=["name", "default_currency", "country"], order_by="name", limit_page_length=0)
     company_names = {item.name for item in companies}
     if not companies or (company and company not in company_names):
         frappe.throw(_("You do not have access to this company."), frappe.PermissionError)
-    company = company or companies[0].name
+    # Prefer the Philippine peso workspace without changing historical record currency
+    # or expanding the companies the current user is allowed to read.
+    preferred = [item for item in companies if item.country == "Philippines" and item.default_currency == "PHP"]
+    choices = list(preferred or companies)
+    if company:
+        if company not in {item.name for item in choices}:
+            choices.append(next(item for item in companies if item.name == company))
+    else:
+        global_company = frappe.defaults.get_global_default("company")
+        company = global_company if global_company in {item.name for item in preferred} else choices[0].name
     doctype, party_field, date_field = SECTIONS[section]
     if not frappe.has_permission(doctype, "read"):
         frappe.throw(_("You do not have access to these records."), frappe.PermissionError)
@@ -60,7 +69,7 @@ def workspace(company=None, section="sales", search="", page=0, open_only="0"):
     has_more = len(records) > PAGE_SIZE
     return {
         "user": {"name": user, "full_name": frappe.get_cached_value("User", user, "full_name")},
-        "companies": companies, "company": company,
+        "companies": choices, "company": company,
         "section": section, "available_sections": available_sections,
         "can_create_sales": frappe.has_permission("Sales Order", "create"),
         "can_prepare_migration": user == "Administrator" or "System Manager" in frappe.get_roles(),

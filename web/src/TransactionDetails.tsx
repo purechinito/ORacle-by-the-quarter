@@ -16,7 +16,7 @@ const routes: Record<string, {route: string; section?: Section; label: string}> 
 function text(value: unknown) {return value === undefined || value === null ? 'Not available' : String(value);}
 function money(value: unknown, code: unknown) {
   if (typeof value !== 'number' || typeof code !== 'string' || !/^[A-Z]{3}$/.test(code)) return 'Not available';
-  return new Intl.NumberFormat(undefined,{style:'currency',currency:code}).format(value);
+  return new Intl.NumberFormat('en-PH',{style:'currency',currency:code}).format(value);
 }
 export function TransactionDetails({section,name,company,onBack,onNavigate}: {
   section: Section; name: string; company: string; onBack: () => void;

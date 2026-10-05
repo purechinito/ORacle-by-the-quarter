@@ -8,17 +8,34 @@ import subprocess
 root = Path(__file__).resolve().parents[1]
 erp = str(root / "scripts/erp")
 year = date.today().year
-args = {"company_name": "Orbit Demo Company", "company_abbr": "ODC",
-        "country": "United States", "currency": "USD", "timezone": "Asia/Manila",
+probe = subprocess.run([erp, "exec", "backend", "bench", "--site", "frontend", "execute",
+                        "frappe.client.get_value", "--kwargs",
+                        json.dumps({"doctype": "System Settings", "fieldname": "setup_complete"})],
+                       check=True, capture_output=True, text=True)
+setup_state = json.loads(probe.stdout.strip())
+if not isinstance(setup_state, dict) or set(setup_state) != {"setup_complete"}:
+    raise RuntimeError("Could not determine whether the ERP setup is complete; no setup changes were made.")
+setup_complete = setup_state["setup_complete"]
+if type(setup_complete) not in (bool, int, type(None)) or setup_complete not in (0, 1, None):
+    raise RuntimeError("Could not determine whether the ERP setup is complete; no setup changes were made.")
+fresh_setup = not setup_complete
+args = {"company_name": "Orbit Philippines Demo", "company_abbr": "OPH",
+        "country": "Philippines", "currency": "PHP", "timezone": "Asia/Manila",
         "language": "English", "fy_start_date": f"{year}-01-01", "fy_end_date": f"{year}-12-31",
         "chart_of_accounts": "Standard", "domain": "Manufacturing",
         "bank_account": "Operating Bank", "enable_telemetry": 0, "setup_demo": 0}
+if fresh_setup:
+    subprocess.run([erp, "exec", "backend", "bench", "--site", "frontend", "execute",
+                    "frappe.desk.page.setup_wizard.setup_wizard.setup_complete",
+                    "--kwargs", json.dumps({"args": args})], check=True)
+# Existing sites receive only scoped Philippine demo masters and defaults. Their
+# posted books are preserved, and rerunning this script never adds transactions.
 subprocess.run([erp, "exec", "backend", "bench", "--site", "frontend", "execute",
-                "frappe.desk.page.setup_wizard.setup_wizard.setup_complete",
-                "--kwargs", json.dumps({"args": args})], check=True)
+                "quarter_erp.philippines.setup_demo"], check=True)
 subprocess.run([erp, "exec", "backend", "bench", "--site", "frontend", "enable-scheduler"], check=True)
-fixture = (root / "apps/quarter_erp/quarter_erp/fixtures.py").read_text()
-subprocess.run([erp, "exec", "backend", "bash", "-c", "cat > /tmp/orbit_fixtures.py"],
-               input=fixture, text=True, check=True)
-subprocess.run([erp, "exec", "backend", "bash", "-c",
-               "cd sites && /home/frappe/frappe-bench/env/bin/python /tmp/orbit_fixtures.py"], check=True)
+if fresh_setup:
+    fixture = (root / "apps/quarter_erp/quarter_erp/fixtures.py").read_text()
+    subprocess.run([erp, "exec", "backend", "bash", "-c", "cat > /tmp/orbit_fixtures.py"],
+                   input=fixture, text=True, check=True)
+    subprocess.run([erp, "exec", "backend", "bash", "-c",
+                   "cd sites && /home/frappe/frappe-bench/env/bin/python /tmp/orbit_fixtures.py"], check=True)

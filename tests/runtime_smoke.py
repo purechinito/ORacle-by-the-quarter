@@ -95,6 +95,11 @@ class RunningEngine(unittest.TestCase):
             self.assertIsInstance(json.load(response)["data"], list)
         with client.open(BASE + "/api/method/quarter_erp.api.workspace?section=purchasing", timeout=15) as response:
             workspace = json.load(response)["message"]
+            self.assertEqual(workspace["company"], "Orbit Philippines Demo")
+            self.assertTrue(all(row["default_currency"] == "PHP" for row in workspace["companies"]))
+        legacy_query = urllib.parse.urlencode({"section": "purchasing", "company": "Orbit Demo Company"})
+        with client.open(BASE + "/api/method/quarter_erp.api.workspace?" + legacy_query, timeout=15) as response:
+            workspace = json.load(response)["message"]
             self.assertEqual(workspace["company"], "Orbit Demo Company")
             self.assertTrue(any(row["name"] == "PUR-ORD-2026-00001" for row in workspace["records"]))
 

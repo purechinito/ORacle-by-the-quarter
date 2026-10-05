@@ -1,5 +1,6 @@
 """Real permission tests, executed inside the ERP site with rollback."""
 import unittest
+from unittest.mock import patch
 import frappe
 
 
@@ -11,6 +12,85 @@ class WorkspaceAccess(unittest.TestCase):
     def tearDown(self):
         frappe.set_user("Administrator")
         frappe.db.rollback(save_point="workspace_tests")
+        frappe.clear_cache()
+
+    def company(self, name, abbr, country="Philippines", currency="PHP"):
+        return frappe.get_doc({"doctype": "Company", "company_name": name, "abbr": abbr,
+                               "country": country, "default_currency": currency}).insert()
+
+    def sales_user(self, email, company):
+        user = frappe.get_doc({"doctype": "User", "email": email,
+                              "first_name": "Workspace Company Test", "send_welcome_email": 0,
+                              "user_type": "System User", "roles": [{"role": "Sales User"}]}).insert()
+        frappe.get_doc({"doctype": "User Permission", "user": user.name, "allow": "Company",
+                        "for_value": company, "apply_to_all_doctypes": 1}).insert()
+        return user.name
+
+    def test_default_prefers_philippine_peso_company_over_alphabetically_first_us_company(self):
+        from quarter_erp.api import workspace
+
+        legacy = self.company("AAA Workspace US Test", "AWUS", "United States", "USD")
+        self.company("Workspace Cebu Peso Test", "WCPT")
+        preferred = frappe.get_list("Company", filters={"country": "Philippines", "default_currency": "PHP"},
+                                    pluck="name", order_by="name", limit_page_length=0)
+        self.assertLess(legacy.name, preferred[0])
+        # Only the configured global preference is substituted; company/record permissions remain native.
+        with patch("frappe.defaults.get_global_default", return_value=None):
+            result = workspace(section="sales")
+        self.assertEqual(result["company"], preferred[0])
+        self.assertEqual([row.name for row in result["companies"]], preferred)
+        self.assertTrue(all(row.country == "Philippines" and row.default_currency == "PHP"
+                            for row in result["companies"]))
+        self.assertEqual(frappe.db.get_value("Company", legacy.name, "default_currency"), "USD")
+
+    def test_authorized_philippine_global_company_is_preferred(self):
+        from quarter_erp.api import workspace
+
+        self.company("AAA Workspace Cebu First", "AWCF")
+        preferred = self.company("ZZZ Workspace Cebu Preferred", "ZWCP")
+        with patch("frappe.defaults.get_global_default", return_value=preferred.name):
+            result = workspace(section="sales")
+        self.assertEqual(result["company"], preferred.name)
+
+    def test_explicit_legacy_company_preserves_original_currency_and_values(self):
+        from quarter_erp.api import transaction, workspace
+
+        self.company("Workspace Cebu Legacy Test", "WCLT")
+        result = workspace(company="Orbit Demo Company", section="sales")
+        selected = next(row for row in result["companies"] if row.name == "Orbit Demo Company")
+        self.assertEqual(selected.default_currency, "USD")
+        self.assertEqual(selected.country, "United States")
+        self.assertTrue(all(row.name == selected.name or (row.country == "Philippines" and row.default_currency == "PHP")
+                            for row in result["companies"]))
+        order = next(row for row in result["records"] if row.name == "SAL-ORD-2026-00001")
+        self.assertEqual((order.currency, order.grand_total), ("USD", 250))
+        detail = transaction("sales", order.name, selected.name)
+        self.assertEqual((detail["document"]["currency"], detail["document"]["grand_total"]), ("USD", 250))
+
+    def test_global_default_and_explicit_legacy_reads_keep_company_permissions(self):
+        from quarter_erp.api import workspace
+
+        visible = self.company("Workspace Cebu Visible", "WCV")
+        hidden = self.company("Workspace Cebu Hidden", "WCH")
+        frappe.set_user(self.sales_user("workspace-ph-scope@example.invalid", visible.name))
+        with patch("frappe.defaults.get_global_default", return_value=hidden.name):
+            result = workspace(section="sales")
+        self.assertEqual(result["company"], visible.name)
+        self.assertEqual([row.name for row in result["companies"]], [visible.name])
+        for company in (hidden.name, "Orbit Demo Company"):
+            with self.subTest(company=company), self.assertRaises(frappe.PermissionError):
+                workspace(company=company, section="sales")
+
+    def test_legacy_only_account_keeps_authorized_fallback(self):
+        from quarter_erp.api import workspace
+
+        hidden = self.company("Workspace Cebu Fallback Test", "WCFT")
+        frappe.set_user(self.sales_user("workspace-legacy-scope@example.invalid", "Orbit Demo Company"))
+        with patch("frappe.defaults.get_global_default", return_value=hidden.name):
+            result = workspace(section="sales")
+        self.assertEqual(result["company"], "Orbit Demo Company")
+        self.assertEqual([row.name for row in result["companies"]], ["Orbit Demo Company"])
+        self.assertTrue(all(row.currency == "USD" for row in result["records"]))
 
     def test_admin_reads_actual_company_and_sales(self):
         from quarter_erp.api import workspace
