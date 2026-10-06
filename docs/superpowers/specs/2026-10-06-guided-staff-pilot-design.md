@@ -2,6 +2,7 @@
 
 Date: 6 October 2026 (Asia/Manila).
 Status: proposed design for owner review; no staff links or new workflow have been activated.
+Updated with the owner's eleven sales/logistics document references on 6 October.
 
 ## Intended outcome
 
@@ -276,6 +277,20 @@ scope. This release adds no paid mail or carrier service, new server, public tes
 database or security permission to third-party infrastructure.
 
 ## Separate deliverables and remaining real inputs
+
+The owner's new document photographs are reviewed in
+`docs/sales-document-familiarity.md`. Preserve familiar Customer Information,
+Order Specific, packing/shipping columns and attributable handoff labels when
+their respective stages are designed. Those photographs are context, not
+authorization to import/post historical transactions or reconstruct masked prices.
+Keep commercial invoices, warehouse guides, transfer slips, stuffing reports and
+carrier documents distinct. Familiar print and stuffing changes are later
+deliverables; the first staff onboarding/data-entry release must not wait on them.
+
+One carrier reference describes completion of an earlier shipment. The confirmed
+one-plant-per-order policy remains unchanged, but shipment cardinality and partial
+dispatch need a separate owner decision before the shipping stage. The initial
+full-order dispatch restriction above is proposed, not established by the photos.
 
 Deliver in order: (1) permission hardening, six-person onboarding and data-entry
 guide; (2) authoritative Winnie approval; (3) real plant assignment/preparation;
