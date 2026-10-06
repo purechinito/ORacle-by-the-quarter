@@ -5,6 +5,7 @@ import { TransactionDetails } from './TransactionDetails';
 import { SalesDraft, hasPendingSales } from './SalesDraft';
 import { MigrationPreview } from './MigrationPreview';
 import { BIRReview } from './BIRReview';
+import { CompanyFooter } from './CompanyFooter';
 
 type Section = 'sales' | 'purchasing' | 'receivables' | 'payables';
 type RecordRow = {name: string; status: string; docstatus: number; currency: string; grand_total: number; modified: string; per_billed?: number; per_delivered?: number; per_received?: number; outstanding_amount?: number; [key: string]: string | number | undefined};
@@ -89,7 +90,7 @@ function App() {
           </section>
           <aside className="context" aria-label="Selected record"><div className="context-heading"><span className="section-number">02</span><h2>Record overview</h2></div>{record && !busy ? <><div className="context-type">{config.singular}</div><h3>{record.name}</h3><p className="party">{record[data!.party_field]}</p><div className="amount"><span>DOCUMENT TOTAL</span><strong>{currency(record.grand_total,record.currency)}</strong><small>{record.currency}</small></div><dl><div><dt>Status</dt><dd>{record.status}</dd></div><div><dt>{section === 'sales'?'Expected delivery':section === 'purchasing'?'Expected receipt':'Due date'}</dt><dd>{date(record[data!.date_field])}</dd></div><div><dt>Last updated</dt><dd>{date(record.modified)}</dd></div></dl>{record.per_billed !== undefined && <div className="progress-group"><h4>Fulfillment & billing</h4><Progress label={section==='sales'?'Delivered':'Received'} value={record.per_delivered ?? record.per_received ?? 0}/><Progress label="Billed" value={record.per_billed}/></div>}{record.outstanding_amount !== undefined && <div className="outstanding"><span>Remaining balance</span><strong>{currency(record.outstanding_amount,record.currency)}</strong></div>}<button className="primary" onClick={()=>setDetail(record.name)}>{section==='sales'?'Review order & credit':'View transaction'} <span aria-hidden="true">→</span></button><a className="context-native" href={native(record.name)}>Open in full ERP ↗</a><p className="context-help">{section==='sales'?'Prepare a draft, review customer credit, then continue to the order approval action.':'Review line items and linked documents here. Editing and posting actions remain in the full ERP.'}</p></> : <div className="context-placeholder"><span>◎</span><p>Select a record to see its progress and details.</p></div>}</aside>
         </div>}
-        <footer className="page-footer"><span>ORBIT WORKSPACE <span className="footer-dot">•</span> Connected to ERPNext</span><span>One record. One source of truth.</span></footer>
+        <CompanyFooter/>
       </main>
     </div>
   </div>;

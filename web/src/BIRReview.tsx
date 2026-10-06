@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState, type FormEvent} from 'react';
 import './bir.css';
+import {CompanyFooter} from './CompanyFooter';
 
 type FiscalYear = {name:string; year_start_date:string; year_end_date:string};
 type ReviewOptions = {
@@ -305,7 +306,7 @@ export function BIRReview() {
         </div>
         <section className="bir-export" aria-labelledby="bir-export-title"><div><span className="bir-eyebrow">PREPARE A REVIEW PACK</span><h2 id="bir-export-title">Take the review to your accountant.</h2><p>Downloading regenerates complete reports from current saved data under these exact filters, with a new generation time in the manifest. It is a preparation pack, not a tax return.</p><dl><div><dt>Preview generated</dt><dd>{text(result.generated_at)}</dd></div><div><dt>Finance-book scope</dt><dd>{text(result.finance_book_scope)}</dd></div><div><dt>Company / fiscal year</dt><dd>{result.company} / {result.fiscal_year}</dd></div></dl>{dirty && <p className="bir-export-warning">Save the profile before exporting. To discard unsaved edits, refresh the review.</p>}</div>{dirty || saving?<button className="bir-button bir-download" disabled>Download review pack <span aria-hidden="true">↓</span></button>:<a className="bir-button bir-download" href={exportURL} download>Download review pack <span aria-hidden="true">↓</span></a>}</section>
       </>}
-      <footer className="bir-footer"><span>ORBIT · ACCOUNTING REVIEW</span><span>{user?`Signed in as ${text(user)}`:'Current account permissions apply'} · No taxpayer data stored in browser storage</span></footer>
+      <CompanyFooter note={user?`Signed in as ${text(user)}`:'Current account permissions apply'}/>
     </main>
   </div>;
 }

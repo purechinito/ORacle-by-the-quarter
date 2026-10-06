@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import './migration.css';
+import {CompanyFooter} from './CompanyFooter';
 
 type Field = {key:string; label:string; required:boolean; default?:string; reference?:string};
 type Schema = {label:string; fields:Field[]};
@@ -110,6 +111,6 @@ export function MigrationPreview() {
         </>}
         {busy && <p className="migration-progress" role="status">{busy}</p>}
       </main>
-    </div><footer className="migration-footer">YOUR DATA. A TRACEABLE START.<span>Preview → Rehearse → Reconcile → Import</span></footer>
+    </div><CompanyFooter note="Preview → Rehearse → Reconcile → Import"/>
   </div>;
 }
