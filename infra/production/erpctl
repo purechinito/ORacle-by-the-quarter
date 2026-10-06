@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""Operate the production stack from its deployment directory."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import secrets
+import subprocess
+
+ROOT = Path(__file__).resolve().parent
+os.chdir(ROOT)
+
+def compose(*args, **kwargs):
+    return subprocess.run(['docker', 'compose', *args], check=True, **kwargs)
+
+def settings():
+    return dict(line.split('=', 1) for line in (ROOT / '.env').read_text().splitlines() if '=' in line)
+
+def initialize(domain):
+    if not re.fullmatch(r'[a-z0-9]+(?:[-.][a-z0-9]+)*\.[a-z]{2,}', domain):
+        raise SystemExit('A valid lowercase domain is required.')
+    if (ROOT / '.env').exists():
+        if settings()['ERP_SITE'] != domain:
+            raise SystemExit('Existing deployment belongs to another domain.')
+        return
+    versions = json.loads((ROOT / 'versions.json').read_text())['images']
+    release = json.loads((ROOT / 'release.json').read_text())
+    values = {'ERP_SITE': domain, 'ERPNEXT_IMAGE': release['image'],
+              'MARIADB_IMAGE': 'mariadb@' + versions['library/mariadb']['digest'],
+              'REDIS_IMAGE': 'redis@' + versions['library/redis']['digest'],
+              'DB_PASSWORD': secrets.token_urlsafe(32),
+              'ERP_ADMIN_PASSWORD': secrets.token_urlsafe(32)}
+    fd = os.open(ROOT / '.env', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, 'w') as stream:
+        stream.write(''.join(f'{key}={value}\n' for key, value in values.items()))
+    print('Production settings created with private file permissions.')
+
+def backup(bucket=None):
+    site = settings()['ERP_SITE']
+    compose('exec', '-T', 'backend', 'bench', '--site', site, 'backup', '--with-files')
+    timestamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+    target = ROOT / 'backups' / timestamp
+    target.mkdir(parents=True, mode=0o700)
+    # Select the newest complete set inside the container without exposing config.
+    script = "from pathlib import Path; import json; p=Path('sites') / " + repr(site) + " / 'private/backups'; d=sorted(p.glob('*-database.sql.gz'))[-1]; prefix=d.name.removesuffix('-database.sql.gz'); print(json.dumps([str(p/(prefix+s)) for s in ['-database.sql.gz','-files.tar','-private-files.tar','-site_config_backup.json']]))"
+    files = json.loads(compose('exec', '-T', 'backend', './env/bin/python', '-c', script,
+                              text=True, stdout=subprocess.PIPE).stdout)
+    for filename in files:
+        compose('cp', 'backend:/home/frappe/frappe-bench/' + filename, str(target / Path(filename).name))
+    hashes = {}
+    for path in target.iterdir():
+        path.chmod(0o600)
+        hashes[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    (target / 'sha256.json').write_text(json.dumps(hashes, indent=2) + '\n')
+    (target / 'sha256.json').chmod(0o600)
+    if bucket:
+        if not re.fullmatch(r'gs://[a-z0-9][a-z0-9._-]+', bucket):
+            raise SystemExit('Use a bucket URL without an object path.')
+        subprocess.run(['python3', str(ROOT / 'storage-upload.py'), str(target), bucket], check=True)
+    print('Backup complete: ' + str(target))
+    return target
+
+parser = argparse.ArgumentParser(description=__doc__)
+sub = parser.add_subparsers(dest='action', required=True)
+init = sub.add_parser('init'); init.add_argument('--domain', required=True)
+sub.add_parser('build')
+sub.add_parser('prepare')
+restore = sub.add_parser('restore'); restore.add_argument('directory')
+sub.add_parser('check-data')
+sub.add_parser('start')
+sub.add_parser('status')
+bak = sub.add_parser('backup'); bak.add_argument('--bucket')
+args = parser.parse_args()
+if args.action == 'init':
+    initialize(args.domain)
+elif args.action == 'build':
+    release = json.loads((ROOT / 'release.json').read_text())
+    compose('config', '--quiet')
+    subprocess.run(['docker', 'build', '--build-arg', 'BASE_IMAGE=' + release['base_image'],
+                    '-t', release['image'], 'build'], check=True)
+elif args.action == 'prepare':
+    compose('up', '-d', 'db', 'redis-cache', 'redis-queue', 'configurator', 'create-site')
+    compose('wait', 'create-site')
+    # docker compose wait reports the job's exit code; no web listener is started.
+elif args.action == 'restore':
+    directory = Path(args.directory).resolve()
+    hashes = json.loads((directory / 'sha256.json').read_text())
+    if len(hashes) != 4:
+        raise SystemExit('Expected checksums for exactly four backup files.')
+    for name, digest in hashes.items():
+        if Path(name).name != name or hashlib.sha256((directory / name).read_bytes()).hexdigest() != digest:
+            raise SystemExit('Backup checksum mismatch.')
+    compose('run', '--rm', '-T', '--no-deps', '--user', 'root', '-v', str(directory) + ':/restore:ro',
+            '-v', str(ROOT / 'restore.py') + ':/tmp/restore.py:ro',
+            'create-site', './env/bin/python /tmp/restore.py')
+elif args.action == 'check-data':
+    with (ROOT / 'data-check.py').open('rb') as source:
+        compose('run', '--rm', '-T', '--no-deps', '--entrypoint', './env/bin/python',
+                'create-site', '-', settings()['ERP_SITE'], stdin=source)
+elif args.action == 'start':
+    site = settings()['ERP_SITE']
+    compose('run', '--rm', '-T', '--no-deps', '--entrypoint', 'bench', 'create-site', '--site', site,
+            'set-maintenance-mode', 'off')
+    compose('run', '--rm', '-T', '--no-deps', '--entrypoint', 'bench', 'create-site', '--site', site,
+            'enable-scheduler')
+    compose('up', '-d')
+elif args.action == 'backup':
+    backup(args.bucket)
+elif args.action == 'status':
+    compose('ps', '-a')

@@ -1,0 +1,11 @@
+[Unit]
+Description=Super Q ERP database and file backup to private Cloud Storage
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/superq-erp
+UMask=0077
+ExecStart=/opt/superq-erp/erpctl backup --bucket gs://superq-erp-backups-308964708234

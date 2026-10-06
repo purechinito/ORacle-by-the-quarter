@@ -1,0 +1,186 @@
+name: superq-erp
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+x-engine: &engine
+  image: ${ERPNEXT_IMAGE:?Missing application image}
+  volumes:
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+  restart: unless-stopped
+  logging: *logging
+
+services:
+  db:
+    image: ${MARIADB_IMAGE:?Missing pinned database image}
+    restart: unless-stopped
+    logging: *logging
+    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --skip-character-set-client-handshake]
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:?Missing database password}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      start_period: 20s
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redis-cache:
+    image: ${REDIS_IMAGE:?Missing pinned Redis image}
+    restart: unless-stopped
+    logging: *logging
+
+  redis-queue:
+    image: ${REDIS_IMAGE:?Missing pinned Redis image}
+    restart: unless-stopped
+    logging: *logging
+    command: [redis-server, --appendonly, "yes"]
+    volumes:
+      - redis-queue-data:/data
+
+  configurator:
+    <<: *engine
+    restart: "no"
+    entrypoint: [bash, -ec]
+    command:
+      - |
+        ls -1 apps > sites/apps.txt
+        bench set-config -g db_host db
+        bench set-config -gp db_port 3306
+        bench set-config -g redis_cache redis://redis-cache:6379
+        bench set-config -g redis_queue redis://redis-queue:6379
+        bench set-config -g redis_socketio redis://redis-queue:6379
+        bench set-config -gp socketio_port 9000
+
+  create-site:
+    <<: *engine
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      configurator:
+        condition: service_completed_successfully
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+    environment:
+      ERP_SITE: ${ERP_SITE:?Missing domain}
+      DB_PASSWORD: ${DB_PASSWORD:?Missing database password}
+      ERP_ADMIN_PASSWORD: ${ERP_ADMIN_PASSWORD:?Missing bootstrap password}
+    entrypoint: [bash, -ec]
+    command:
+      - |
+        if [ ! -f "sites/$$ERP_SITE/site_config.json" ]; then
+          bench new-site "$$ERP_SITE" --mariadb-user-host-login-scope='%' --db-root-username=root --db-root-password="$$DB_PASSWORD" --admin-password="$$ERP_ADMIN_PASSWORD" --install-app erpnext --set-default
+          touch "sites/$$ERP_SITE/.fresh-install"
+        fi
+        if ! bench --site "$$ERP_SITE" list-apps | grep -q quarter_erp; then
+          bench --site "$$ERP_SITE" install-app quarter_erp
+        fi
+        bench --site "$$ERP_SITE" set-config host_name "https://$$ERP_SITE"
+        bench --site "$$ERP_SITE" migrate --skip-search-index
+        bench --site "$$ERP_SITE" clear-cache
+
+  backend:
+    <<: *engine
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, /home/frappe/frappe-bench/env/bin/python, -c, "import urllib.request,os; r=urllib.request.Request('http://127.0.0.1:8000/api/method/ping',headers={'X-Frappe-Site-Name':os.environ['ERP_SITE']}); assert urllib.request.urlopen(r,timeout=5).status==200"]
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      ERP_SITE: ${ERP_SITE:?Missing domain}
+      # Backend has no public listener; its frontend supplies the HTTPS scheme.
+      FORWARDED_ALLOW_IPS: "*"
+
+  frontend:
+    <<: *engine
+    command: [nginx-entrypoint.sh]
+    environment:
+      BACKEND: backend:8000
+      FRAPPE_SITE_NAME_HEADER: ${ERP_SITE:?Missing domain}
+      SOCKETIO: websocket:9000
+      UPSTREAM_REAL_IP_ADDRESS: 172.31.252.2
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "on"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    networks:
+      default: {}
+      edge:
+        ipv4_address: 172.31.252.3
+    depends_on: [backend, websocket]
+
+  websocket:
+    <<: *engine
+    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
+    environment:
+      FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+      FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  queue-long:
+    <<: *engine
+    command: [bench, worker, --queue, "long,default,short"]
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  queue-short:
+    <<: *engine
+    command: [bench, worker, --queue, "short,default"]
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  scheduler:
+    <<: *engine
+    command: [bench, schedule]
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  caddy:
+    image: caddy@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      ERP_SITE: ${ERP_SITE:?Missing domain}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      edge:
+        ipv4_address: 172.31.252.2
+    depends_on: [frontend]
+
+networks:
+  edge:
+    ipam:
+      config:
+        - subnet: 172.31.252.0/28
+
+volumes:
+  db-data:
+  redis-queue-data:
+  sites:
+  logs:
+  caddy-data:
+  caddy-config:

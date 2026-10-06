@@ -1,0 +1,20 @@
+{$ERP_SITE} {
+    encode zstd gzip
+    @bad_socket_origin {
+        path /socket.io*
+        header Origin *
+        not header Origin https://{$ERP_SITE}
+    }
+    respond @bad_socket_origin 403
+    @missing_socket_origin {
+        path /socket.io*
+        not header Origin *
+        not header Sec-Fetch-Site same-origin
+    }
+    respond @missing_socket_origin 403
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        -Server
+    }
+    reverse_proxy frontend:8080
+}
