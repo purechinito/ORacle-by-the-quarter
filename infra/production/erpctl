@@ -106,6 +106,8 @@ elif args.action == 'start':
             'set-maintenance-mode', 'off')
     compose('run', '--rm', '-T', '--no-deps', '--entrypoint', 'bench', 'create-site', '--site', site,
             'enable-scheduler')
+    compose('run', '--rm', '-T', '--no-deps', '--entrypoint', 'bench', 'create-site', '--site', site,
+            'scheduler', 'resume')
     compose('up', '-d')
 elif args.action == 'backup':
     backup(args.bucket)

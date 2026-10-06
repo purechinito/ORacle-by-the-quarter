@@ -7,7 +7,9 @@ cutover fingerprints across the 22 checked business/permission tables,
 authentication records and all 14 private files. Existing Administrator login,
 PHP workspace, guest access restrictions and authenticated realtime pass.
 The private backup service completed successfully; its daily timer runs around
-02:00 Asia/Manila. Staff account creation awaits the owner's emails and roles.
+02:00 Asia/Manila. The owner has supplied six staff emails and departments;
+their accounts are not yet active. Outgoing mail authentication and the reviewed
+department-access rollout remain pending.
 
 The user approved PHP 3,000/month, replacing the proposed USD 100 budget.
 Project-only billing alerts are configured; this is a planning target, not a
@@ -27,7 +29,7 @@ mode with its scheduler disabled and retained as a cutover recovery reference.
 | HTTPS | Caddy certificate issuance/renewal; HTTP redirects to HTTPS |
 | Off-server backups | Private Singapore Cloud Storage bucket; 30-day lifecycle |
 | Backup identity | Object Creator on that bucket only; no service-account keys |
-| Staff | Existing users preserved; additional users wait for real emails/roles |
+| Staff | Existing users preserved; six supplied staff accounts are not yet active |
 
 The revised Google calculator quote for VM and disk is USD 34.57/month at
 730 hours. A used static IPv4 adds about USD 3.65/month. We allow USD 2/month
@@ -87,15 +89,17 @@ database backups and credentials are transferred separately.
    The restore refuses to overwrite a site without its fresh-install marker.
 6. Compare `erpctl check-data` to the cutover fingerprints. Add the `erp` A record
    in dotPH at the reserved IP, leaving other domain records unchanged.
-7. Start the site. Verify public DNS, trusted HTTPS, login, denied guest access,
-   realtime, private photos and workers. Keep the cloud site as the entry point
+7. Start the site. `erpctl start` removes maintenance mode, enables the database
+   scheduler setting and resumes the configuration pause left by restore before
+   starting services. Verify public DNS, trusted HTTPS, login, denied guest access,
+   realtime, private photos, workers and active scheduler status. Keep the cloud site as the entry point
    for new records; do not enter records in both copies.
 8. Install the supplied backup service/timer, run an immediate off-server
    backup, and verify it from the owner's account. Billing alerts are configured for superq-erp only: USD 41/month before tax,
    with actual-cost thresholds at 50/90/100% and a forecast warning at 90%.
    The amount reserves 12% tax at PHP 65/USD; it is not an enforced cap.
-9. Add staff accounts when the owner provides emails, company assignments and
-   roles. Staff use the website; they do not need a desktop ERP installation.
+9. Activate the supplied staff accounts after department-access validation and
+   mail setup. Staff use the website; they do not need a desktop ERP installation.
 
 The order sources are still intake records. Selling prices, units, customer
 mapping and per-line VAT treatment remain pending, with NGOSIOK MARKETING as
@@ -131,6 +135,42 @@ backups can lose up to approximately one day of entries after an outage.
 Check failed backup service status and the most recent completion manifest.
 The current deployment does not include automatic failover or outbound mail
 configuration for staff invitations/password reset.
+
+## Invitation delivery repair, 6 October 2026
+
+The live audit found no records for the six requested staff accounts, no Email
+Account or site-configuration SMTP fallback, and no queued invitations. An empty
+queue means those invitations were never generated; it is not a delivery receipt.
+The owner selected `office@ngosiokmarketing.com` as the outgoing sender. The
+domain receives mail through Zoho; incoming MX records do not identify the exact
+account-specific SMTP configuration or provide authentication credentials.
+
+Restore intentionally sets `pause_scheduler=1`. The original start command only
+enabled System Settings, leaving that separate configuration pause intact. The
+live site had maintenance off, the database scheduler setting enabled and its
+configuration pause still on. Native `bench --site erp.superq.ph scheduler resume`
+cleared that pause. The live API then reported `active`, and both email flush and
+retry jobs recorded execution at 12:56 Asia/Manila. Those execution timestamps
+do not prove SMTP acceptance or inbox delivery.
+
+The same resume command now runs in the repository and the deployed operator
+helper before services start. The old deployed helper is preserved at
+`/opt/superq-erp/erpctl.before-email-repair-20261006`. The deployed helper's
+SHA-256 matches the updated repository file. All five isolated production-helper
+tests pass, including startup from a restored pause and aborting when resume
+fails; no local recovery-site data was changed.
+
+The owner completed the Zoho login. Its primary-mailbox settings identify
+`smtppro.zoho.com`, port 465, SSL. A certificate-validated connection from the
+live ERP backend completed EHLO successfully using TLS 1.3. The outgoing account
+form is prepared but unsaved, awaiting the owner's app-password entry directly
+in the ERP. Keep incoming mail disabled and require SMTP authentication. Do not save an active
+default account with “Awaiting password” as a substitute for working credentials.
+After configuration validates, test a message to an approved recipient and check
+the native queue/provider result before reporting that invitations work.
+
+Provider references: [Zoho SMTP settings](https://www.zoho.com/mail/help/zoho-smtp.html),
+[Google Cloud outgoing mail ports](https://docs.cloud.google.com/compute/docs/tutorials/sending-mail).
 
 API references: [object insertion and create-only preconditions](https://docs.cloud.google.com/storage/docs/json_api/v1/objects/insert),
 [VM workload authentication](https://docs.cloud.google.com/compute/docs/access/authenticate-workloads).
