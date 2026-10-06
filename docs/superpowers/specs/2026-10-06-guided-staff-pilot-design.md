@@ -1,7 +1,8 @@
 # Guided staff pilot and order fulfillment design
 
 Date: 6 October 2026 (Asia/Manila).
-Status: proposed design for owner review; no staff links or new workflow have been activated.
+Status: owner approved on 6 October 2026; implementation plan pending review.
+No staff links or new workflow have been activated.
 Updated with the owner's eleven sales/logistics document references on 6 October.
 
 ## Intended outcome
@@ -31,6 +32,8 @@ synthetic customers, employees, transactions, prices, balances or stock.
   Physical plant selection does not change the selling legal company.
 - The owner distributes first-login links personally. Outgoing SMTP is not a
   prerequisite; no staff messages are sent by the implementation.
+  The Office ERP Notifications sender has since passed a live delivery test;
+  that does not change the approved manual-distribution scope.
 - The live read on 6 October found 170 disabled items, one Customer, zero Item
   Prices, Suppliers, Sales Orders, invoices, Delivery Notes, payments and Workflow
   records. Only Administrator, Guest and the existing purchasing account exist.
