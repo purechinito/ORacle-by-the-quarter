@@ -200,7 +200,7 @@ def readiness(profile,company,summary):
     add('manufacturing','Inventory, WIP and finished-goods reconciliation','review','Reconcile stock valuation, production costs and GL; validate the applicable BIR inventory-list format. Not established by this financial pack.')
     add('accountant','Accountant review','review' if profile.get('accountant_name') and profile.get('accountant_review_date') else 'blocked',
         'Recorded reviewer: '+profile.get('accountant_name','')+'. Retain signed acceptance for the actual setup and data.' if profile.get('accountant_name') else 'Assign an accountant and document review of the actual taxpayer, data, books and invoices.')
-    add('operations','Retention, audit history and production recovery','review','This local development service has no verified production restore/SLA. Keep issued originals, action history and legal holds; validate backup restoration and the CAS technical checklist.')
+    add('operations','Retention, audit history and production recovery','review','Keep issued originals, action history and legal holds. Document production restore tests, backup retention, service availability and the CAS technical checklist. Hosting alone does not establish accounting-record retention or an availability SLA.')
     return checks
 
 
