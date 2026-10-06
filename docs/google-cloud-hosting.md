@@ -8,8 +8,8 @@ authentication records and all 14 private files. Existing Administrator login,
 PHP workspace, guest access restrictions and authenticated realtime pass.
 The private backup service completed successfully; its daily timer runs around
 02:00 Asia/Manila. The owner has supplied six staff emails and departments;
-their accounts are not yet active. Outgoing mail authentication and the reviewed
-department-access rollout remain pending.
+their accounts are not yet active. Outgoing mail is configured and delivery to
+the sender's mailbox is verified; the department-access rollout remains pending.
 
 The user approved PHP 3,000/month, replacing the proposed USD 100 budget.
 Project-only billing alerts are configured; this is a planning target, not a
@@ -133,8 +133,9 @@ in the ERP and any approved archive. Host-side copied backup folders are not
 automatically pruned; review their growth and disk space regularly. Daily
 backups can lose up to approximately one day of entries after an outage.
 Check failed backup service status and the most recent completion manifest.
-The current deployment does not include automatic failover or outbound mail
-configuration for staff invitations/password reset.
+The current deployment does not include automatic failover. Outgoing mail is
+configured for staff invitations/password reset, but the six requested staff
+accounts and their department restrictions are not yet active.
 
 ## Invitation delivery repair, 6 October 2026
 
@@ -162,12 +163,19 @@ fails; no local recovery-site data was changed.
 
 The owner completed the Zoho login. Its primary-mailbox settings identify
 `smtppro.zoho.com`, port 465, SSL. A certificate-validated connection from the
-live ERP backend completed EHLO successfully using TLS 1.3. The outgoing account
-form is prepared but unsaved, awaiting the owner's app-password entry directly
-in the ERP. Keep incoming mail disabled and require SMTP authentication. Do not save an active
-default account with “Awaiting password” as a substitute for working credentials.
-After configuration validates, test a message to an approved recipient and check
-the native queue/provider result before reporting that invitations work.
+live ERP backend completed EHLO successfully using TLS 1.3. The owner entered
+the app password directly in the ERP and saved `Office ERP Notifications`.
+The saved account has incoming mail disabled, SMTP authentication required,
+SSL enabled, TLS/STARTTLS disabled for port 465, and no BCC recipient.
+It is the default outgoing account and enforces the office sender address.
+No credential was copied into the repository or delivery evidence.
+
+A single native test message to `office@ngosiokmarketing.com` reached Email Queue
+status `Sent` with zero retries and appeared in that mailbox's inbox at
+13:16:59 Asia/Manila on 6 October 2026. Sender configuration and end-to-end test
+delivery are verified. This test contained no password or account-setup link;
+staff invitations have not been generated or sent. Staff account activation and
+effective department-access validation remain separate rollout work.
 
 Provider references: [Zoho SMTP settings](https://www.zoho.com/mail/help/zoho-smtp.html),
 [Google Cloud outgoing mail ports](https://docs.cloud.google.com/compute/docs/tutorials/sending-mail).
